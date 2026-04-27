@@ -4,8 +4,9 @@ import 'dart:collection';
 import 'package:flutter/widgets.dart';
 
 import './_flutter_widgets.dart';
+import 'debug_overlay.dart';
 import 'screen_util.dart';
-import 'screenutil_mixin.dart';
+import 'su_mixin.dart';
 
 typedef RebuildFactor = bool Function(MediaQueryData old, MediaQueryData data);
 
@@ -38,6 +39,14 @@ abstract class RebuildFactors {
   static bool none(MediaQueryData _, MediaQueryData __) {
     return false;
   }
+
+  /// Bug 3 fix default — also fires on orientation change, not just size.
+  ///
+  /// This prevents a square-ish tablet from missing a rebuild when it rotates
+  /// but the pixel dimensions happen to be identical.
+  static bool sizeOrOrientation(MediaQueryData old, MediaQueryData data) {
+    return old.size != data.size || old.orientation != data.orientation;
+  }
 }
 
 abstract class FontSizeResolvers {
@@ -63,45 +72,138 @@ abstract class FontSizeResolvers {
 }
 
 class ScreenUtilInit extends StatefulWidget {
-  /// A helper widget that initializes [ScreenUtil]
+  /// A helper widget that initialises [ScreenUtil].
+  ///
+  /// Place this at the root of your widget tree, wrapping [MaterialApp] (or
+  /// equivalent).  All children can then use `.w`, `.h`, `.sp`, `.r`, etc.
+  ///
+  /// ```dart
+  /// ScreenUtilInit(
+  ///   designSize: const Size(390, 844),
+  ///   minTextAdapt: true,
+  ///   builder: (_, child) => MaterialApp(home: child),
+  ///   child: const MyApp(),
+  /// )
+  /// ```
   const ScreenUtilInit({
     Key? key,
     this.builder,
     this.child,
-    this.rebuildFactor = RebuildFactors.size,
+    // Bug 3 fix: new default also fires on orientation change.
+    this.rebuildFactor = RebuildFactors.sizeOrOrientation,
+    // ── Portrait design sizes ──────────────────────────────────────────────
     this.designSize = ScreenUtil.defaultSize,
+    this.tabletDesignSize,
+    this.desktopDesignSize,
+    // ── Landscape design sizes ─────────────────────────────────────────────
+    this.landscapeDesignSize,
+    this.tabletLandscapeDesignSize,
+    this.desktopLandscapeDesignSize,
+    // ── Text ──────────────────────────────────────────────────────────────
     this.splitScreenMode = false,
     this.minTextAdapt = false,
+    // Bug 1 fix: expose both text-scale bounds to the caller.
+    this.minTextScaleFactor = 0.85,
+    this.maxTextScaleFactor = 1.4,
+    // ── Breakpoints ────────────────────────────────────────────────────────
+    this.phoneBreakpoint = 600,
+    this.tabletBreakpoint = 1024,
+    // ── Scale toggles ──────────────────────────────────────────────────────
     this.useInheritedMediaQuery = false,
     this.ensureScreenSize = false,
     this.enableScaleWH,
     this.enableScaleText,
+    // ── Widget lists ──────────────────────────────────────────────────────
     this.responsiveWidgets,
     this.excludeWidgets,
-    this.fontSizeResolver = FontSizeResolvers.width,
+    // ── Font size resolver ────────────────────────────────────────────────
+    this.fontSizeResolver,
+    // ── Debug ──────────────────────────────────────────────────────────────
+    this.debugShowOverlay = false,
   }) : super(key: key);
 
   final ScreenUtilInitBuilder? builder;
   final Widget? child;
+
+  // ── Portrait design sizes ────────────────────────────────────────────────
+
+  /// Phone portrait design frame (required).  Equivalent to the original
+  /// `designSize` parameter — accepts the same value.
+  final Size designSize;
+
+  /// Tablet portrait design frame.  When omitted, tablet falls back to
+  /// [designSize].
+  final Size? tabletDesignSize;
+
+  /// Desktop portrait design frame.  When omitted, desktop falls back to
+  /// [tabletDesignSize] then [designSize].
+  final Size? desktopDesignSize;
+
+  // ── Landscape design sizes ───────────────────────────────────────────────
+
+  /// Phone landscape design frame.  When `null`, the portrait frame is
+  /// automatically transposed (width ↔ height).
+  final Size? landscapeDesignSize;
+
+  /// Tablet landscape design frame.  `null` → auto-transpose tablet portrait.
+  final Size? tabletLandscapeDesignSize;
+
+  /// Desktop landscape design frame. `null` → auto-transpose desktop portrait.
+  final Size? desktopLandscapeDesignSize;
+
+  // ── Text scale ───────────────────────────────────────────────────────────
+
   final bool splitScreenMode;
   final bool minTextAdapt;
+
+  /// Text-scale floor.  Defaults to `0.85` — text never shrinks below 85 % of
+  /// its design size (was hardcoded `0.5` in the original).
+  final double minTextScaleFactor;
+
+  /// Text-scale ceiling.  Defaults to `1.4` — text never grows above 140 % of
+  /// its design size.
+  final double maxTextScaleFactor;
+
+  // ── Breakpoints ──────────────────────────────────────────────────────────
+
+  /// Logical width at which phone transitions to tablet.  Default: 600 dp.
+  final double phoneBreakpoint;
+
+  /// Logical width at which tablet transitions to desktop.  Default: 1024 dp.
+  final double tabletBreakpoint;
+
+  // ── Scale toggles / misc ─────────────────────────────────────────────────
+
   final bool useInheritedMediaQuery;
   final bool ensureScreenSize;
   final bool Function()? enableScaleWH;
   final bool Function()? enableScaleText;
   final RebuildFactor rebuildFactor;
-  final FontSizeResolver fontSizeResolver;
 
-  /// The [Size] of the device in the design draft, in dp
-  final Size designSize;
+  /// Custom font-size resolver.  When provided it bypasses the built-in
+  /// orientation-aware clamp, preserving backwards compatibility.
+  final FontSizeResolver? fontSizeResolver;
+
   final Iterable<String>? responsiveWidgets;
   final Iterable<String>? excludeWidgets;
+
+  // ── Debug ─────────────────────────────────────────────────────────────────
+
+  /// Show a live metrics HUD (screen size, scale factors, orientation, device
+  /// type, dpr, and a 16 sp sanity value) during development.
+  ///
+  /// Automatically disable in release builds by passing `kDebugMode`:
+  /// ```dart
+  /// debugShowOverlay: kDebugMode,
+  /// ```
+  final bool debugShowOverlay;
 
   @override
   State<ScreenUtilInit> createState() => _ScreenUtilInitState();
 }
 
-class _ScreenUtilInitState extends State<ScreenUtilInit> with WidgetsBindingObserver {
+class _ScreenUtilInitState extends State<ScreenUtilInit>
+    with WidgetsBindingObserver {
   final _canMarkedToBuild = HashSet<String>();
   final _excludedWidgets = HashSet<String>();
   MediaQueryData? _mediaQueryData;
@@ -113,8 +215,14 @@ class _ScreenUtilInitState extends State<ScreenUtilInit> with WidgetsBindingObse
     if (widget.responsiveWidgets != null) {
       _canMarkedToBuild.addAll(widget.responsiveWidgets!);
     }
+    if (widget.excludeWidgets != null) {
+      _excludedWidgets.addAll(widget.excludeWidgets!);
+    }
 
-    ScreenUtil.enableScale(enableWH: widget.enableScaleWH, enableText: widget.enableScaleText);
+    ScreenUtil.enableScale(
+      enableWH: widget.enableScaleWH,
+      enableText: widget.enableScaleText,
+    );
 
     _validateSize().then(_screenSizeCompleter.complete);
 
@@ -144,14 +252,24 @@ class _ScreenUtilInitState extends State<ScreenUtilInit> with WidgetsBindingObse
     if (widget.ensureScreenSize) return ScreenUtil.ensureScreenSize();
   }
 
+  // ── Bug 3 fix: explicit SU mixin check replaces name-heuristic ───────────
+
   void _markNeedsBuildIfAllowed(Element el) {
-    final widgetName = el.widget.runtimeType.toString();
+    final w = el.widget;
+    // Explicit opt-out: skip widgets that implement SuExclude.
+    if (w is SuExclude) return;
+    final widgetName = w.runtimeType.toString();
     if (_excludedWidgets.contains(widgetName)) return;
-    final allowed = widget is SU ||
-        _canMarkedToBuild.contains(widgetName) ||
+
+    // Explicit opt-in: rebuild widgets marked with the SU mixin.
+    final suOptIn = w is SU;
+
+    // Legacy name-based heuristic retained as secondary path for widgets
+    // that haven't been migrated to SU yet.
+    final nameBasedAllow = _canMarkedToBuild.contains(widgetName) ||
         !(widgetName.startsWith('_') || flutterWidgets.contains(widgetName));
 
-    if (allowed) el.markNeedsBuild();
+    if (suOptIn || nameBasedAllow) el.markNeedsBuild();
   }
 
   void _updateTree(Element el) {
@@ -168,10 +286,41 @@ class _ScreenUtilInitState extends State<ScreenUtilInit> with WidgetsBindingObse
     if (oldData == null || widget.rebuildFactor(oldData, newData)) {
       setState(() {
         _mediaQueryData = newData;
-        _updateTree(context as Element);
         callback?.call();
       });
+      // Walk the element tree *after* setState so we never call
+      // markNeedsBuild() while a build is already scheduled for this frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _updateTree(context as Element);
+      });
     }
+  }
+
+  // ── Shared configure call ─────────────────────────────────────────────────
+
+  void _configureScreenUtil(MediaQueryData mq) {
+    ScreenUtil.configure(
+      data: mq,
+      // Portrait
+      designSize: widget.designSize,
+      tabletDesignSize: widget.tabletDesignSize,
+      desktopDesignSize: widget.desktopDesignSize,
+      // Landscape
+      landscapeDesignSize: widget.landscapeDesignSize,
+      tabletLandscapeDesignSize: widget.tabletLandscapeDesignSize,
+      desktopLandscapeDesignSize: widget.desktopLandscapeDesignSize,
+      // Flags
+      splitScreenMode: widget.splitScreenMode,
+      minTextAdapt: widget.minTextAdapt,
+      // Text scale
+      minTextScaleFactor: widget.minTextScaleFactor,
+      maxTextScaleFactor: widget.maxTextScaleFactor,
+      // Breakpoints
+      phoneBreakpoint: widget.phoneBreakpoint,
+      tabletBreakpoint: widget.tabletBreakpoint,
+      // Resolver
+      fontSizeResolver: widget.fontSizeResolver,
+    );
   }
 
   @override
@@ -181,30 +330,27 @@ class _ScreenUtilInitState extends State<ScreenUtilInit> with WidgetsBindingObse
     if (mq == null) return const SizedBox.shrink();
 
     if (!widget.ensureScreenSize) {
-      ScreenUtil.configure(
-        data: mq,
-        designSize: widget.designSize,
-        splitScreenMode: widget.splitScreenMode,
-        minTextAdapt: widget.minTextAdapt,
-        fontSizeResolver: widget.fontSizeResolver,
+      _configureScreenUtil(mq);
+      final content =
+          widget.builder?.call(context, widget.child) ?? widget.child!;
+      return ScreenUtilDebugOverlay(
+        enabled: widget.debugShowOverlay,
+        child: content,
       );
-
-      return widget.builder?.call(context, widget.child) ?? widget.child!;
     }
 
     return FutureBuilder<void>(
       future: _screenSizeCompleter.future,
-      builder: (c, snapshot) {
-        ScreenUtil.configure(
-          data: mq,
-          designSize: widget.designSize,
-          splitScreenMode: widget.splitScreenMode,
-          minTextAdapt: widget.minTextAdapt,
-          fontSizeResolver: widget.fontSizeResolver,
-        );
+      builder: (_, snapshot) {
+        _configureScreenUtil(mq);
 
         if (snapshot.connectionState == ConnectionState.done) {
-          return widget.builder?.call(context, widget.child) ?? widget.child!;
+          final content =
+              widget.builder?.call(context, widget.child) ?? widget.child!;
+          return ScreenUtilDebugOverlay(
+            enabled: widget.debugShowOverlay,
+            child: content,
+          );
         }
 
         return const SizedBox.shrink();

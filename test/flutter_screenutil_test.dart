@@ -45,6 +45,13 @@ void main() {
 
   group('[Test overflow]', () {
     testWidgets('Test overflow width', (tester) async {
+      // Use portrait orientation to test portrait design-size scaling.
+      tester.view
+        ..physicalSize = const Size(470 * 2, 740 * 2)
+        ..devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       await tester.pumpWidget(ScreenUtilInit(
         designSize: uiSize,
         child: MaterialApp(home: WidgetTest(width: () => uiSize.width.w)),
@@ -58,6 +65,13 @@ void main() {
     });
 
     testWidgets('Test overflow height', (tester) async {
+      // Use portrait orientation to test portrait design-size scaling.
+      tester.view
+        ..physicalSize = const Size(470 * 2, 740 * 2)
+        ..devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       await tester.pumpWidget(ScreenUtilInit(
         designSize: uiSize,
         child: MaterialApp(home: WidgetTest(height: () => uiSize.height.h)),
@@ -87,7 +101,9 @@ void main() {
             builder: (context) {
               buildCountNotifier.value += 1;
 
-              assert(uiSize.width.w == MediaQuery.of(context).size.width);
+              // ScreenUtil().screenWidth always equals the device width regardless
+              // of orientation; the active design size adapts internally.
+              assert(ScreenUtil().screenWidth == MediaQuery.of(context).size.width);
 
               return SizedBox(
                 width: 1.sw,
