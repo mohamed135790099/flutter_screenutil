@@ -1,0 +1,112 @@
+00:00 +0: loading /Users/moazmohamed/projects/flutter_screenutil/test/adaptive_test.dart
+00:00 +0: Phase 1 — setSp / scaleText portrait scale at design size → 16.sp ≈ 16
+00:00 +1: Phase 1 — setSp / scaleText wide screen clamped at maxTextScaleFactor
+00:00 +2: Phase 1 — setSp / scaleText small screen clamped at minTextScaleFactor
+00:00 +3: Phase 1 — setSp / scaleText minTextAdapt: true uses min(scaleW, scaleH)
+00:00 +4: Phase 1 — setSp / scaleText custom FontSizeResolver overrides default
+00:00 +5: Phase 1 — setSp / scaleText defaultFontSizeResolver factory matches built-in
+00:00 +6: Phase 1 — setSp / scaleText clampedAbsoluteResolver clamps output in dp
+00:00 +7: Phase 1 — setSp / scaleText minAxisResolver uses min(scaleW, scaleH)
+00:00 +8: Phase 2 — orientation portrait screen → isPortrait = true, isLandscape = false
+00:00 +9: Phase 2 — orientation landscape screen → isLandscape = true, isPortrait = false
+00:00 +10: Phase 2 — orientation landscape auto-transposes portrait design size (Bug 2)
+00:00 +11: Phase 2 — orientation explicit landscapeDesignSize overrides auto-transpose
+00:00 +11 -1: Phase 2 — orientation explicit landscapeDesignSize overrides auto-transpose [E]
+  Expected: a numeric value within <0.01> of <1.25>
+    Actual: <1.1848341232227488>
+     Which:  differs by <0.06516587677725116>
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test/adaptive_test.dart 206:7                       main.<fn>.<fn>
+  
+00:00 +11 -1: Phase 2 — orientation portrait scaleWidth unaffected by landscapeDesignSize
+00:00 +12 -1: Phase 2 — orientation OrientationValue<T> resolves correct value
+00:00 +13 -1: Phase 3 — device type detection width < 600 → phone
+00:00 +14 -1: Phase 3 — device type detection width == 600 → tablet (boundary)
+00:00 +15 -1: Phase 3 — device type detection width == 1024 → desktop (boundary)
+00:00 +16 -1: Phase 3 — device type detection width >= 1600 → tv
+00:00 +17 -1: Phase 3 — device type detection adaptive<T>() returns correct value per device
+00:00 +18 -1: Phase 3 — device type detection adaptive<T>() fallback: desktop absent → returns tablet
+00:00 +19 -1: Phase 3 — device type detection adaptive<T>() fallback: only phone → all devices get phone
+00:00 +20 -1: Phase 3 — device type detection Breakpoints.value<int> resolves per width
+00:00 +21 -1: Phase 3 — device type detection Breakpoints.deviceTypeFor with custom breakpoints
+00:00 +22 -1: Phase 4 — ScreenMetrics & mixin ScreenMetrics.current() captures correct state
+00:00 +23 -1: Phase 4 — ScreenMetrics & mixin ScreenMetrics.sp() mirrors ScreenUtil.setSp()
+00:00 +24 -1: Phase 4 — ScreenMetrics & mixin ScreenMetrics equality — same state = equal
+00:00 +25 -1: Phase 4 — ScreenMetrics & mixin ScreenMetrics inequality — different screen = not equal
+00:00 +26 -1: Phase 4 — ScreenMetrics & mixin SuResponsiveWrapper carries SU mixin
+00:00 +27 -1: Phase 4 — ScreenMetrics & mixin widget implementing SuExclude is identifiable
+00:00 +28 -1: Phase 5 — AdaptiveNum .w scales by scaleWidth
+00:00 +29 -1: Phase 5 — AdaptiveNum .h scales by scaleHeight
+00:00 +30 -1: Phase 5 — AdaptiveNum .sp is orientation-aware (clamp applies)
+00:00 +31 -1: Phase 5 — AdaptiveNum .r uses shorter axis
+00:00 +32 -1: Phase 5 — AdaptiveNum tablet tier selected on tablet device
+00:00 +33 -1: Phase 5 — AdaptiveNum fallback: desktop absent → tablet value used
+00:00 +34 -1: Phase 5 — AdaptiveNum verticalSpace is a SizedBox with correct height
+00:00 +35 -1: Phase 5 — AdaptiveNum horizontalSpace is a SizedBox with correct width
+00:00 +36 -1: Phase 5 — num extension (.adaptive / .aw / .ah / .asp / .ar) .adaptive() seeds AdaptiveNum with this as phone
+00:00 +37 -1: Phase 5 — num extension (.adaptive / .aw / .ah / .asp / .ar) .adaptive(tablet:) overrides tablet tier
+00:00 +38 -1: Phase 5 — num extension (.adaptive / .aw / .ah / .asp / .ar) .aw applies width multipliers
+00:00 +39 -1: Phase 5 — num extension (.adaptive / .aw / .ah / .asp / .ar) .asp applies sp multipliers on phone
+00:00 +40 -1: Phase 5 — num extension (.adaptive / .aw / .ah / .asp / .ar) .ar applies radius multipliers on phone
+00:00 +41 -1: Phase 5 — AdaptiveDouble .value returns correct tier (phone)
+00:00 +42 -1: Phase 5 — AdaptiveDouble .value returns correct tier (desktop)
+00:00 +43 -1: Phase 5 — AdaptiveDouble .toInt rounds correctly
+00:00 +44 -1: Phase 5 — AdaptiveDouble fallback chain: tablet absent → phone
+00:00 +45 -1: Phase 5 — AdaptiveSize .value returns raw unscaled size
+00:00 +46 -1: Phase 5 — AdaptiveSize .wh scales w by scaleWidth, h by scaleHeight
+00:00 +47 -1: Phase 5 — AdaptiveSize .w preserves aspect ratio (both by scaleWidth)
+00:00 +48 -1: Phase 5 — AdaptiveSize .r uses shorter axis
+00:00 +49 -1: Phase 5 — AdaptiveSize Size.adaptive() extension works
+00:00 +50 -1: Phase 5 — AdaptiveEdgeInsets .all constructor sets all sides equal
+00:00 +51 -1: Phase 5 — AdaptiveEdgeInsets .all tablet tier selected
+00:00 +52 -1: Phase 5 — AdaptiveEdgeInsets .symmetric phoneH/phoneV set correctly
+00:00 +53 -1: Phase 5 — AdaptiveEdgeInsets .only phoneLeft/phoneRight default to 0
+00:00 +54 -1: Phase 5 — AdaptiveEdgeInsets .w scales all sides by scaleWidth
+00:00 +55 -1: Phase 5 — AdaptiveEdgeInsets .wh scales H by scaleWidth, V by scaleHeight
+00:00 +56 -1: Phase 5 — AdaptiveEdgeInsets EdgeInsets.adaptive() extension seeds phone value
+00:00 +57 -1: Phase 5 — AdaptiveEdgeInsets fallback: tablet absent → phone value
+00:00 +58 -1: Phase 5 — AdaptiveBorderRadius .circular all corners equal
+00:00 +59 -1: Phase 5 — AdaptiveBorderRadius .circular tablet tier
+00:00 +60 -1: Phase 5 — AdaptiveBorderRadius .only per-corner on phone
+00:00 +61 -1: Phase 5 — AdaptiveBorderRadius .r scales corners by shorter axis
+00:00 +62 -1: Phase 5 — AdaptiveBorderRadius .w scales corners by scaleWidth
+00:00 +63 -1: Phase 5 — AdaptiveBorderRadius BorderRadius.adaptive() extension
+00:00 +64 -1: Phase 5 — AdaptiveColor .value returns phone color on phone
+00:00 +65 -1: Phase 5 — AdaptiveColor .value returns desktop color on desktop
+00:00 +66 -1: Phase 5 — AdaptiveColor Color.adaptive() extension: fallback to phone when tablet absent
+00:00 +67 -1: Phase 5 — AdaptiveColor Color.adaptive() extension: uses tablet override
+00:00 +68 -1: Phase 5 — AdaptiveTextStyle .style fontSize uses setSp
+00:00 +69 -1: Phase 5 — AdaptiveTextStyle .style picks tablet fontSize on tablet
+00:00 +70 -1: Phase 5 — AdaptiveTextStyle .style falls back to phone fontSize when tablet absent on tablet
+00:00 +71 -1: Phase 5 — AdaptiveTextStyle .style applies fontWeight
+00:00 +72 -1: Phase 5 — AdaptiveTextStyle .style applies color
+00:00 +73 -1: Phase 5 — AdaptiveTextStyle .style applies fontFamily
+00:00 +74 -1: Phase 5 — AppSpacing phone raw values match spec
+00:00 +75 -1: Phase 5 — AppSpacing tablet raw values match spec
+00:00 +76 -1: Phase 5 — AppSpacing desktop raw values match spec
+00:00 +77 -1: Phase 5 — AppSpacing .w scales by scaleWidth on phone
+00:00 +78 -1: Phase 5 — AppSpacing .hs returns a SizedBox with height
+00:00 +79 -1: Phase 5 — AppSpacing .ws returns a SizedBox with width
+00:00 +80 -1: Phase 5 — AppSpacing tablet tier selected on tablet device
+00:00 +81 -1: Phase 5 — AdaptiveGridDelegate correct column count on phone
+00:00 +82 -1: Phase 5 — AdaptiveGridDelegate shouldRelayout false when identical
+00:00 +83 -1: Phase 5 — AdaptiveGridDelegate shouldRelayout true when spacing changes
+00:00 +84 -1: Phase 5 — AdaptiveGridDelegate shouldRelayout true for different delegate type
+00:00 +85 -1: Phase 5 — AdaptiveGridDelegate fallback: desktop absent on desktop → uses tablet count
+00:00 +86 -1: Canonical screen matrix — 16.sp at reference screens 360×690 small phone — 16.sp ≥ 0.85×16 and ≤ 16
+00:00 +87 -1: Canonical screen matrix — 16.sp at reference screens 390×844 design phone — 16.sp ≈ 16
+00:00 +88 -1: Canonical screen matrix — 16.sp at reference screens 414×896 plus phone — 16.sp ≈ 16 (design close)
+00:00 +89 -1: Canonical screen matrix — 16.sp at reference screens 768×1024 iPad portrait — 16.sp clamped at 1.4×
+00:00 +90 -1: Canonical screen matrix — 16.sp at reference screens 1024×768 iPad landscape — 16.sp clamped at 1.4×
+00:00 +90 -2: Canonical screen matrix — 16.sp at reference screens 1024×768 iPad landscape — 16.sp clamped at 1.4× [E]
+  Expected: a numeric value within <0.2> of <22.4>
+    Actual: <19.412322274881518>
+     Which:  differs by <2.9876777251184805>
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test/adaptive_test.dart 852:9                       main.<fn>.check.<fn>
+  
+00:00 +90 -2: Some tests failed.

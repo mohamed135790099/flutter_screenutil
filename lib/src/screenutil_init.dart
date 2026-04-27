@@ -109,6 +109,10 @@ class ScreenUtilInit extends StatefulWidget {
     this.phoneBreakpoint = 600,
     this.tabletBreakpoint = 1024,
     // ── Scale toggles ──────────────────────────────────────────────────────
+    @Deprecated(
+      'useInheritedMediaQuery has no effect since the rebuild-engine rewrite. '
+      'Remove this parameter — ScreenUtil now always reads from the View layer.',
+    )
     this.useInheritedMediaQuery = false,
     this.ensureScreenSize = false,
     this.enableScaleWH,
@@ -174,6 +178,10 @@ class ScreenUtilInit extends StatefulWidget {
 
   // ── Scale toggles / misc ─────────────────────────────────────────────────
 
+  @Deprecated(
+    'useInheritedMediaQuery has no effect since the rebuild-engine rewrite. '
+    'Remove this parameter — ScreenUtil now always reads from the View layer.',
+  )
   final bool useInheritedMediaQuery;
   final bool ensureScreenSize;
   final bool Function()? enableScaleWH;

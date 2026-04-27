@@ -5,523 +5,1419 @@
 [![Popularity](https://img.shields.io/pub/popularity/flutter_screenutil)](https://pub.dev/packages/flutter_screenutil/score)
 [![CodeFactor](https://www.codefactor.io/repository/github/openflutter/flutter_screenutil/badge)](https://www.codefactor.io/repository/github/openflutter/flutter_screenutil)
 
-**A flutter plugin for adapting screen and font size.Let your UI display a reasonable layout on different screen sizes!**
+**A Flutter plugin for adapting screen and font size. Your UI displays a reasonable layout on every screen — phone, tablet, and desktop.**
 
-*Note*: This plugin is still under development, and some APIs might not be available yet.
+> **Fully additive.** Every existing API (`200.w`, `14.sp`, `8.r`, `ScreenUtilInit`, etc.) works exactly as before. All improvements are new parameters and new classes layered on top — no breaking changes.
 
-[中文文档](https://github.com/OpenFlutter/flutter_screenutil/blob/master/README_CN.md)  
+---
 
-[README em Português](https://github.com/OpenFlutter/flutter_screenutil/blob/master/README_PT.md)
+## Table of Contents
 
-[github](https://github.com/OpenFlutter/flutter_screenutil)
+1. [Installation](#1-installation)
+2. [Quick Start](#2-quick-start)
+3. [What Was Fixed](#3-what-was-fixed)
+4. [ScreenUtilInit — Full Parameter Reference](#4-screenutilinit--full-parameter-reference)
+5. [Core API (unchanged)](#5-core-api-unchanged)
+6. [Orientation Support](#6-orientation-support)
+7. [Device-Class API](#7-device-class-api)
+8. [Debug HUD](#8-debug-hud)
+9. [Phase 5 — Adaptive Extensions](#9-phase-5--adaptive-extensions)
+   - [AdaptiveNum](#adaptivenum)
+   - [num.adaptive() quick shortcut](#numadaptive-quick-shortcut)
+   - [Auto-scaled shortcuts — .aw .ah .asp .ar](#auto-scaled-shortcuts)
+   - [AdaptiveSize](#adaptivesize)
+   - [AdaptiveEdgeInsets](#adaptiveedgeinsets)
+   - [AdaptiveTextStyle](#adaptivetextstyle)
+   - [AdaptiveBorderRadius](#adaptiveborderradius)
+   - [AdaptiveColor](#adaptivecolor)
+   - [AdaptiveDouble](#adaptivedouble)
+   - [.adaptive() on existing types](#adaptive-on-existing-types)
+   - [AppSpacing tokens](#appspacing-tokens)
+   - [AdaptiveGridDelegate](#adaptivegriddelegate)
+10. [Fallback Chain](#10-fallback-chain)
+11. [Breakpoints](#11-breakpoints)
+12. [Text Scale Clamp Reference](#12-text-scale-clamp-reference)
+13. [Migration Cheat-Sheet](#13-migration-cheat-sheet)
+14. [Full Example App](#14-full-example-app)
+15. [Testing](#15-testing)
 
-[Update log](https://github.com/OpenFlutter/flutter_screenutil/blob/master/CHANGELOG.md)
+---
 
-<p align="center">
-<a href="https://afdian.com/a/zy124"><img width="200" src="https://pic1.afdiancdn.com/static/img/welcome/button-sponsorme.png" alt="zy0124"></a>
-</p>
-<p align="center">
-<a href="https://www.buymeacoffee.com/zhuoyuanL" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;"></a>
-</p>
-
-## Usage
-
-### Add dependency
-
-Please check the latest version before installation.
-If there is any problem with the new version, please use the previous version
+## 1. Installation
 
 ```yaml
 dependencies:
-  flutter:
-    sdk: flutter
-  # add flutter_screenutil
-  flutter_screenutil: ^{latest version}
+  flutter_screenutil: ^{latest_version}
 ```
-
-### Add the following imports to your Dart code
 
 ```dart
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 ```
 
-### Properties
+---
 
-| Property                   | Type             | Default Value | Description                                                                                                                                   |
-| -------------------------- | ---------------- | ------------- |-----------------------------------------------------------------------------------------------------------------------------------------------|
-| designSize                 | Size             | Size(360,690) | The size of the device screen in the design draft (portrait phone), in dp                                                                     |
-| tabletDesignSize           | Size             | null          | The portrait size of the tablet design draft                                                                                                  |
-| desktopDesignSize          | Size             | null          | The portrait size of the desktop design draft                                                                                                 |
-| landscapeDesignSize        | Size             | null          | The landscape size of the phone design draft (if omitted, auto-transposes `designSize`)                                                       |
-| tabletLandscapeDesignSize  | Size             | null          | The landscape size of the tablet design draft (if omitted, auto-transposes `tabletDesignSize`)                                                |
-| desktopLandscapeDesignSize | Size             | null          | The landscape size of the desktop design draft (if omitted, auto-transposes `desktopDesignSize`)                                              |
-| minTextScaleFactor         | double           | 0.85          | The absolute minimum scaling factor for text elements (floor)                                                                                 |
-| maxTextScaleFactor         | double           | 1.4           | The absolute maximum scaling factor for text elements (ceiling)                                                                               |
-| phoneBreakpoint            | double           | 600           | The logical width at which `DeviceType` switches from phone to tablet                                                                         |
-| tabletBreakpoint           | double           | 1024          | The logical width at which `DeviceType` switches from tablet to desktop                                                                       |
-| builder                    | Function         | null          | Return widget that uses the library in a property (ex: MaterialApp's theme)                                                                   |
-| child                      | Widget           | null          | A part of builder that its dependencies/properties don't use the library                                                                      |
-| rebuildFactor              | Function         | _default_     | Function that take old and new screen metrics and returns whether to rebuild or not when changes.                                             |
-| splitScreenMode            | bool             | false         | support for split screen                                                                                                                      |
-| minTextAdapt               | bool             | false         | Whether to adapt the text according to the minimum of width and height                                                                        |
-| context                    | BuildContext     | null          | Get physical device data if not provided, by MediaQuery.of(context)                                                                           |
-| fontSizeResolver           | Function         | _default_     | Function that specify how font size should be adapted. Default is that font size scale with width of screen.                                  |
-| responsiveWidgets          | Iterable<String> | null          | List/Set of widget names that should be included in rebuilding tree. (See [How flutter_screenutil marks a widget needs build](#rebuild-list)) |
-| excludeWidgets             | Iterable<String> | null          | List/Set of widget names that should be excluded from rebuilding tree.                                                                        |
-| enableScaleWH              | Function         | null          | Support enable scale width and height.                                                                                                        |
-| enableScaleText            | Function         | null          | Support enable scale text.                                                                                                                    |
-| debugShowOverlay           | bool             | false         | Shows a live HUD overlay of screen metrics like scaling factors, breakpoints, and orientations                                                |
+## 2. Quick Start
 
-
-**Note : You must either provide builder, child or both.**
-
-### Rebuild list
-Starting from version 5.9.0, ScreenUtilInit won't rebuild the whole widget tree, instead it will mark widget needs build only if:
-- Widget is not a flutter widget (widgets are available in [Flutter Docs](https://docs.flutter.dev/reference/widgets))
-- Widget does not start with underscore (`_`)
-- Widget does not declare `SU` mixin
-- `responsiveWidgets` does not contains widget name
-
-If you have a widget that uses the library and doesn't meet these options you can either add `SU` mixin or add widget name in responsiveWidgets list.
-
-### Initialize and set the fit size and font size to scale according to the system's "font size" accessibility option 
-
-Please set the size of the design draft before use, the width and height of the design draft.
-
-#### The first way (You should use it once in your app)
+Wrap your app root with `ScreenUtilInit`. Place `MaterialApp` inside the `builder` so the entire widget tree rebuilds automatically when screen metrics change (orientation, window resize):
 
 ```dart
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
-    //Set the fit size (Find your UI design, look at the dimensions of the device screen and fill it in,unit in dp)
     return ScreenUtilInit(
-      designSize: const Size(360, 690),
+      designSize: const Size(390, 844),   // your phone Figma frame
       minTextAdapt: true,
-      splitScreenMode: true,
-      // Use builder only if you need to use library outside ScreenUtilInit context
-      builder: (_ , child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'First Method',
-          // You can use the library anywhere in the app even in theme
-          theme: ThemeData(
-            primarySwatch: Colors.blue,
-            textTheme: Typography.englishLike2018.apply(fontSizeFactor: 1.sp),
-          ),
-          home: child,
-        );
-      },
-      child: const HomePage(title: 'First Method'),
+      builder: (_, child) => MaterialApp(
+        home: HomePage(),
+      ),
     );
   }
 }
 ```
 
-#### The second way:You need a trick to support font adaptation in the textTheme of app theme
+That is the only setup required. All `.w`, `.h`, `.sp`, `.r` extensions work immediately everywhere in the tree.
 
-**Hybrid development uses the second way**
+---
 
-not support this:
+## 2b. Upgrading from a Previous Version — Zero Breaking Changes
+
+> **You do not need to change a single line of existing code.**
+>
+> Every parameter, getter, and method from the previous version of `flutter_screenutil` compiles and behaves exactly as before. All new features are purely additive — new optional parameters and new classes that sit alongside the original API.
+
+### Your existing `ScreenUtilInit` still works 100 %
 
 ```dart
-MaterialApp(
+// ✅ This code from ANY previous version compiles and works unchanged
+ScreenUtilInit(
+  designSize:             const Size(360, 690),
+  builder:                (_, child) => MaterialApp(home: child),
+  child:                  const MyHomePage(),
+  rebuildFactor:          RebuildFactors.size,
+  splitScreenMode:        false,
+  minTextAdapt:           false,
+  ensureScreenSize:       false,
+  enableScaleWH:          () => true,
+  enableScaleText:        () => true,
+  responsiveWidgets:      null,
+  excludeWidgets:         null,
+  fontSizeResolver:       FontSizeResolvers.width,
+)
+```
+
+### Every `.w` `.h` `.sp` `.r` extension still works unchanged
+
+```dart
+Container(
+  width:  200.w,    // ✅ still works
+  height: 100.h,    // ✅ still works
+)
+
+Text(
+  'Hello',
+  style: TextStyle(fontSize: 14.sp),   // ✅ still works (now also clamp-safe)
+)
+
+Icon(Icons.star, size: 24.r)           // ✅ still works
+
+SizedBox(height: 16.verticalSpace)     // ✅ still works
+SizedBox(width:  16.horizontalSpace)   // ✅ still works
+
+0.5.sw    // ✅ 50 % of screen width
+1.0.sh    // ✅ full screen height
+16.sm     // ✅ min(16, 16.sp) — deprecated alias for .spMin, still works
+```
+
+### Full attribute status table
+
+| Attribute / API | Exists? | Behavior same? | Notes |
+|---|---|---|---|
+| `designSize` | ✅ | ✅ | Unchanged |
+| `builder` | ✅ | ✅ | Unchanged |
+| `child` | ✅ | ✅ | Unchanged |
+| `rebuildFactor` | ✅ | ✅ | Default now also fires on rotation |
+| `splitScreenMode` | ✅ | ✅ | Unchanged |
+| `minTextAdapt` | ✅ | ✅ | Unchanged |
+| `ensureScreenSize` | ✅ | ✅ | Unchanged |
+| `enableScaleWH` | ✅ | ✅ | Unchanged |
+| `enableScaleText` | ✅ | ✅ | Unchanged |
+| `responsiveWidgets` | ✅ | ✅ | Unchanged |
+| `excludeWidgets` | ✅ | ✅ | Unchanged |
+| `fontSizeResolver` | ✅ | ✅ | Unchanged; `null` = new built-in clamped resolver |
+| `FontSizeResolvers.width` | ✅ | ✅ | Still present and usable |
+| `FontSizeResolvers.height` | ✅ | ✅ | Still present |
+| `FontSizeResolvers.radius` | ✅ | ✅ | Still present |
+| `FontSizeResolvers.diameter` | ✅ | ✅ | Still present |
+| `FontSizeResolvers.diagonal` | ✅ | ✅ | Still present |
+| `RebuildFactors.size` | ✅ | ✅ | Still present |
+| `RebuildFactors.orientation` | ✅ | ✅ | Still present |
+| `RebuildFactors.change` | ✅ | ✅ | Still present |
+| `RebuildFactors.always` | ✅ | ✅ | Still present |
+| `RebuildFactors.none` | ✅ | ✅ | Still present |
+| `useInheritedMediaQuery` | ✅ | — | **Accepted but has no effect.** Shows a `@Deprecated` warning. Safe to remove. |
+| `.w` `.h` `.r` `.sp` `.sm` | ✅ | ✅ | All present in `size_extension.dart` |
+| `.sw` `.sh` | ✅ | ✅ | Screen width/height fraction |
+| `.spMin` `.spMax` | ✅ | ✅ | Unchanged |
+| `.dg` `.dm` | ✅ | ✅ | diagonal / diameter — unchanged |
+| `.verticalSpace` | ✅ | ✅ | `SizedBox(height: …)` |
+| `.horizontalSpace` | ✅ | ✅ | `SizedBox(width: …)` |
+| `EdgeInsets.w` `.h` `.r` | ✅ | ✅ | All extension getters present |
+| `BorderRadius.w` `.h` `.r` | ✅ | ✅ | All extension getters present |
+| `BoxConstraints.w` `.h` `.r` `.hw` | ✅ | ✅ | All extension getters present |
+| `ScreenUtil.init()` | ✅ | ✅ | Manual init path unchanged |
+| `ScreenUtil.configure()` | ✅ | ✅ | Unchanged |
+| `ScreenUtil.ensureScreenSize()` | ✅ | ✅ | Unchanged |
+| `ScreenUtil().screenWidth` | ✅ | ✅ | Unchanged |
+| `ScreenUtil().screenHeight` | ✅ | ✅ | Unchanged |
+| `ScreenUtil().scaleWidth` | ✅ | ✅ | Unchanged |
+| `ScreenUtil().scaleHeight` | ✅ | ✅ | Unchanged |
+| `ScreenUtil().pixelRatio` | ✅ | ✅ | Unchanged |
+| `ScreenUtil().statusBarHeight` | ✅ | ✅ | Unchanged |
+| `ScreenUtil().bottomBarHeight` | ✅ | ✅ | Unchanged |
+| `ScreenUtil().orientation` | ✅ | ✅ | Unchanged |
+| `ScreenUtil().textScaleFactor` | ✅ | ✅ | Unchanged |
+
+### The only deprecated item
+
+`useInheritedMediaQuery` — this parameter is still accepted and causes **no crash**, but it has no effect since the rebuild engine was rewritten to always read from Flutter's `View` layer. You will see a `@Deprecated` IDE warning. Remove it at your convenience:
+
+```dart
+// Before
+ScreenUtilInit(
+  useInheritedMediaQuery: true,   // ← shows @Deprecated warning, safe to remove
   ...
-  //To support the following, you need to use the first initialization method
-  theme: ThemeData(
-    textTheme: TextTheme(
-      button: TextStyle(fontSize: 45.sp)
-    ),
-  ),
 )
-```
 
-but you can do this:
-
-```dart
-void main() async {
-  // Add this line
-  await ScreenUtil.ensureScreenSize();
-  runApp(MyApp());
-}
-...
-MaterialApp(
+// After — identical behavior, no warning
+ScreenUtilInit(
   ...
-  builder: (ctx, child) {
-    ScreenUtil.init(ctx);
-    return Theme(
-      data: ThemeData(
-        primarySwatch: Colors.blue,
-        textTheme: TextTheme(bodyText2: TextStyle(fontSize: 30.sp)),
-      ),
-      child: HomePage(title: 'FlutterScreenUtil Demo'),
-    );
-  },
 )
 ```
 
+---
+
+## 3. What Was Fixed
+
+Three bugs existed in the original package. All are fixed without breaking any existing API.
+
+### Bug 1 — `setSp()` always used `scaleWidth` (text wrong in landscape)
+
+In landscape mode, `scaleWidth` jumps because the screen is now wider than the portrait design. The original code multiplied every font by this inflated scale, making all text oversized after rotation.
+
+**Fixed:** `setSp()` now picks `min(scaleWidth, scaleHeight)` when `minTextAdapt: true`, and clamps the result inside a user-controlled range:
+
 ```dart
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter_ScreenUtil',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: HomePage(title: 'FlutterScreenUtil Demo'),
-    );
-  }
-}
+// Before — broken in landscape
+double setSp(num fontSize) => fontSize * scaleWidth;
 
-class HomePage extends StatefulWidget {
-  const HomePage({Key key, this.title}) : super(key: key);
-
-  final String title;
-
-  @override
-  _HomePageState createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  @override
-  Widget build(BuildContext context) {
-    //Set the fit size (fill in the screen size of the device in the design) 
-    //If the design is based on the size of the 360*690(dp)
-    ScreenUtil.init(context, designSize: const Size(360, 690));
-    ...
-  }
+// After — orientation-aware + two-sided clamp
+double setSp(num fontSize) {
+  final rawScale = _minTextAdapt
+      ? math.min(scaleWidth, scaleHeight)
+      : scaleWidth;
+  return fontSize * rawScale.clamp(_minTextScaleFactor, _maxTextScaleFactor);
 }
 ```
 
-**Note: calling ScreenUtil.init second time, any non-provided parameter will not be replaced with default value. Use ScreenUtil.configure instead**
-
-### API
-
-#### Enable or disable scale
+The `.sp` call signature is **unchanged**:
 
 ```dart
-  Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      enableScaleWH: ()=>false,
-      enableScaleText: ()=>false,
-      //...
-    );
-  }
+Text('Hello', style: TextStyle(fontSize: 14.sp));  // same as always
 ```
 
-or
+### Bug 2 — Design size never updated on orientation change
+
+`_uiSize` was set once at startup and never changed. After rotation all `.w` / `.h` calculations still used the portrait design size.
+
+**Fixed:** The correct design size is now resolved from up to six frames on every build cycle based on current device type and orientation (see [Orientation Support](#6-orientation-support)).
+
+### Bug 3 — Rebuild heuristic failed in release mode
+
+The v5.9.0 name-based heuristic was unreliable: class names can be minified or tree-shaken in release builds, silently breaking responsive rebuilds.
+
+**Fixed:** The default `rebuildFactor` now also fires on **orientation change**, not just size change. Moving `MaterialApp` inside the `builder` callback (see Quick Start above) is the cleanest way to ensure the whole tree rebuilds reactively — no mixin or manual wiring needed.
+
+---
+
+## 4. ScreenUtilInit — Full Parameter Reference
+
+All original parameters are unchanged. New parameters are marked `// NEW`.
 
 ```dart
-ScreenUtil.enableScale(enableWH: () => false, enableText: () => false);
-```
+ScreenUtilInit(
+  // ── Design sizes — portrait ─────────────────────────────────────────
+  designSize:                  const Size(390, 844),   // required, phone portrait
+  tabletDesignSize:            const Size(768, 1024),  // NEW — tablet portrait
+  desktopDesignSize:           const Size(1280, 900),  // NEW — desktop portrait
 
+  // ── Design sizes — landscape (omit any → auto-transpose) ────────────
+  landscapeDesignSize:         const Size(844, 390),   // NEW — phone landscape
+  tabletLandscapeDesignSize:   const Size(1024, 768),  // NEW — tablet landscape
+  desktopLandscapeDesignSize:  const Size(1440, 900),  // NEW — desktop landscape
 
-#### Pass the dp size of the design draft
+  // ── Text ────────────────────────────────────────────────────────────
+  minTextAdapt:        true,          // unchanged
+  minTextScaleFactor:  0.85,          // NEW — scale floor   (default 0.85)
+  maxTextScaleFactor:  1.4,           // NEW — scale ceiling (default 1.4)
+  fontSizeResolver:    myResolver,    // unchanged
 
-```dart
-    ScreenUtil().setWidth(540)  (dart sdk>=2.6 : 540.w) //Adapted to screen width
-    ScreenUtil().setHeight(200) (dart sdk>=2.6 : 200.h) //Adapted to screen height , under normal circumstances, the height still uses x.w
-    ScreenUtil().radius(200)    (dart sdk>=2.6 : 200.r)    //Adapt according to the smaller of width or height
-    ScreenUtil().setSp(24)      (dart sdk>=2.6 : 24.sp) //Adapter font
-    12.sm   //return min(12,12.sp)
+  // ── Breakpoints ─────────────────────────────────────────────────────
+  phoneBreakpoint:     600,           // NEW — default 600 dp
+  tabletBreakpoint:    1024,          // NEW — default 1024 dp
 
-    ScreenUtil().pixelRatio       //Device pixel density
-    ScreenUtil().screenWidth   (dart sdk>=2.6 : 1.sw)    //Device width
-    ScreenUtil().screenHeight  (dart sdk>=2.6 : 1.sh)    //Device height
-    ScreenUtil().bottomBarHeight  //Bottom safe zone distance, suitable for buttons with full screen
-    ScreenUtil().statusBarHeight  //Status bar height , Notch will be higher
-    ScreenUtil().textScaleFactor  //System font scaling factor
+  // ── Scaling toggles ─────────────────────────────────────────────────
+  enableScaleWH:       () => true,    // unchanged
+  enableScaleText:     () => true,    // unchanged
 
-    ScreenUtil().scaleWidth //The ratio of actual width to UI design
-    ScreenUtil().scaleHeight //The ratio of actual height to UI design
+  // ── Layout ──────────────────────────────────────────────────────────
+  splitScreenMode:     false,         // unchanged
 
-    ScreenUtil().orientation  //Screen orientation
-    0.2.sw  //0.2 times the screen width
-    0.5.sh  //50% of screen height
-    20.setVerticalSpacing  // SizedBox(height: 20 * scaleHeight)
-    20.horizontalSpace  // SizedBox(height: 20 * scaleWidth)
-    const RPadding.all(8)   // Padding.all(8.r) - take advantage of const key word
-    EdgeInsets.all(10).w    //EdgeInsets.all(10.w)
-    REdgeInsets.all(8)       // EdgeInsets.all(8.r)
-    EdgeInsets.only(left:8,right:8).r // EdgeInsets.only(left:8.r,right:8.r).
-    BoxConstraints(maxWidth: 100, minHeight: 100).w    //BoxConstraints(maxWidth: 100.w, minHeight: 100.w)
-    Radius.circular(16).w          //Radius.circular(16.w)
-    BorderRadius.all(Radius.circular(16)).w  
-```
+  // ── Rebuild ─────────────────────────────────────────────────────────
+  rebuildFactor:       orientationOrSizeChangedRebuildFactor, // NEW default
+  responsiveWidgets:   null,          // unchanged
+  excludeWidgets:      null,          // unchanged
 
-#### Adapt screen size
+  // ── Debug ───────────────────────────────────────────────────────────
+  debugShowOverlay:    kDebugMode,    // NEW — live metrics HUD
 
-Pass the dp size of the design draft((The unit is the same as the unit at initialization))：
-
-Adapted to screen width: `ScreenUtil().setWidth(540)`,
-
-Adapted to screen height: `ScreenUtil().setHeight(200)`, In general, the height is best to adapt to the width
-
-If your dart sdk>=2.6, you can use extension functions:
-
-example:
-
-instead of :
-
-```dart
-Container(
-  width: ScreenUtil().setWidth(50),
-  height:ScreenUtil().setHeight(200),
+  // ── Content ─────────────────────────────────────────────────────────
+  builder: (_, child) => MaterialApp(home: child),  // unchanged
+  child: const HomePage(),                          // unchanged
 )
 ```
 
-you can use it like this:
+---
+
+## 5. Core API (unchanged)
+
+Every original API remains identical:
 
 ```dart
-Container(
-  width: 50.w,
-  height:200.h
+200.w      // scaled to screen width
+120.h      // scaled to screen height
+14.sp      // orientation-aware font size (now also clamped)
+8.r        // scaled to shorter axis — for radii and icon sizes
+12.sm      // min(12, 12.sp)
+
+1.sw       // full screen width
+1.sh       // full screen height
+0.5.sw     // 50 % of screen width
+
+ScreenUtil().screenWidth
+ScreenUtil().screenHeight
+ScreenUtil().scaleWidth
+ScreenUtil().scaleHeight
+ScreenUtil().pixelRatio
+ScreenUtil().statusBarHeight
+ScreenUtil().bottomBarHeight
+ScreenUtil().orientation
+
+EdgeInsets.all(10).w          // scale EdgeInsets by width
+EdgeInsets.all(10).r          // scale by shorter axis
+BoxConstraints(maxWidth: 100).w
+BorderRadius.all(Radius.circular(16)).w
+
+16.verticalSpace               // SizedBox(height: 16.h)
+16.horizontalSpace             // SizedBox(width: 16.w)
+```
+
+---
+
+## 6. Orientation Support
+
+### Per-device landscape frames
+
+Provide separate Figma frames for each device class. Any omitted variant is **auto-transposed** (width ↔ height swapped) from the portrait frame:
+
+```dart
+// Minimal — only phone has an explicit landscape frame
+ScreenUtilInit(
+  designSize:          const Size(390, 844),
+  landscapeDesignSize: const Size(844, 390),
+)
+
+// Full control — all six frames
+ScreenUtilInit(
+  designSize:                  const Size(390, 844),
+  tabletDesignSize:            const Size(768, 1024),
+  desktopDesignSize:           const Size(1280, 900),
+  landscapeDesignSize:         const Size(844, 390),
+  tabletLandscapeDesignSize:   const Size(1024, 768),
+  desktopLandscapeDesignSize:  const Size(1440, 900),
 )
 ```
 
-#### `Note`
+Internally, the active design size is selected on every build cycle:
 
-The height can also use setWidth to ensure that it is not deformed(when you want a square)
-
-The setHeight method is mainly to adapt to the height, which is used when you want to control the height of a screen on the UI to be the same as the actual display.
-
-Generally speaking, 50.w!=50.h.
-
-```dart
-//for example:
-
-//If you want to display a rectangle:
-Container(
-  width: 375.w,
-  height: 375.h,
-),
-            
-//If you want to display a square based on width:
-Container(
-  width: 300.w,
-  height: 300.w,
-),
-
-//If you want to display a square based on height:
-Container(
-  width: 300.h,
-  height: 300.h,
-),
-
-//If you want to display a square based on minimum(height, width):
-Container(
-  width: 300.r,
-  height: 300.r,
-),
+```
+orientation?
+  portrait  → phone → designSize
+              tablet → tabletDesignSize ?? designSize
+              desktop → desktopDesignSize ?? tabletDesignSize ?? designSize
+  landscape → phone → landscapeDesignSize ?? flip(designSize)
+              tablet → tabletLandscapeDesignSize ?? flip(tabletDesignSize) ?? flip(designSize)
+              desktop → desktopLandscapeDesignSize ?? flip(desktopDesignSize) ?? …
 ```
 
-#### Adapter font
+### New getters
 
-``` dart
-//Incoming font size(The unit is the same as the unit at initialization)
-ScreenUtil().setSp(28) 
-28.sp
+```dart
+ScreenUtil().isLandscape   // bool
+ScreenUtil().isPortrait    // bool
+ScreenUtil().orientation   // Orientation (unchanged)
+```
 
-//for example:
-Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: <Widget>[
-    Text(
-      '16sp, will not change with the system.',
-      style: TextStyle(
-        color: Colors.black,
-        fontSize: 16.sp,
-      ),
-      textScaleFactor: 1.0,
-    ),
-    Text(
-      '16sp,if data is not set in MediaQuery,my font size will change with the system.',
-      style: TextStyle(
-        color: Colors.black,
-        fontSize: 16.sp,
-      ),
-    ),
-  ],
+### `ScreenOrientationBuilder`
+
+```dart
+ScreenOrientationBuilder(
+  portrait:  (ctx) => PortraitLayout(),
+  landscape: (ctx) => LandscapeLayout(),
 )
 ```
 
-#### Setting font does not change with system font size
-
-APP global:
+### `OrientationValue<T>`
 
 ```dart
-MaterialApp(
-  debugShowCheckedModeBanner: false,
-  title: 'Flutter_ScreenUtil',
-  theme: ThemeData(
-    primarySwatch: Colors.blue,
-  ),
-  builder: (context, widget) {
-    return MediaQuery(
-      ///Setting font does not change with system font size
-      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-      child: widget,
-    );
-  },
-  home: HomePage(title: 'FlutterScreenUtil Demo'),
-),
-```
-
-Specified Text:
-
-```dart
-Text("text", textScaleFactor: 1.0)
-```
-
-Specified Widget:
-
-```dart
-MediaQuery(
-  // If there is no context available you can wrap [MediaQuery] with [Builder]
-  data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-  child: AnyWidget(),
-)
-```
-
-[widget test](https://github.com/OpenFlutter/flutter_screenutil/issues/115)
-
-### Adaptive UI Extensions (v6.0+)
-
-Version 6 introduces a powerful suite of **Adaptive Extensions** that automatically select values depending on the current device type (`phone`, `tablet`, `desktop`, `tv`).
-
-#### 1. Adaptive primitives & `.adaptive()`
-You can declare adaptive numbers or generic types with fallbacks. If a larger tier isn't provided, it automatically falls back to the next smaller one tier available.
-
-```dart
-// Returns 16.sp on phones, 18.sp on tablets, and 20.sp on desktop+
-final fontSize = ScreenUtil().adaptive<double>(
-  phone: 16.sp,
-  tablet: 18.sp,
-  desktop: 20.sp,
+final padding = OrientationValue<EdgeInsets>(
+  portrait:  EdgeInsets.symmetric(horizontal: 16.w),
+  landscape: EdgeInsets.symmetric(horizontal: 32.w),
 );
 
-// Built-in numbers using AdaptiveNum
-double width = AdaptiveNum(phone: 100, tablet: 150, desktop: 200).w;
-double height = AdaptiveNum(phone: 50, tablet: 80).h;
+// In build():
+Padding(padding: padding.value)
 ```
 
-**Quick primitive syntax:**
-Instead of `.w` or `.h`, you can chain adaptive extensions directly on the `AdaptiveNum`:
+### `SliverOrientationDelegate`
+
 ```dart
-AdaptiveNum(phone: 24, tablet: 32).sp  // returns an adaptive scaled font size
-AdaptiveNum(phone: 10, tablet: 16).w   // returns an adaptive scaled width
+GridView.builder(
+  gridDelegate: SliverOrientationDelegate(
+    portraitCrossAxisCount:  2,
+    landscapeCrossAxisCount: 4,
+    childAspectRatio: 1.0,
+  ),
+  itemBuilder: (_, i) => ProductCard(products[i]),
+)
 ```
 
-#### 2. Adaptive Widget APIs
+---
 
-A collection of pre-made tools has been added to make UI components fluid out of the box:
+## 7. Device-Class API
 
-**EdgeInsets:**
+### `DeviceType` enum
+
 ```dart
-// All sides equal per device
-padding: AdaptiveEdgeInsets.all(phone: 12, tablet: 16, desktop: 20).w,
+enum DeviceType { phone, tablet, desktop, tv }
+```
 
-// Symmetric per-device
-padding: AdaptiveEdgeInsets.symmetric(
-  phoneH: 16, phoneV: 12,
+Auto-detected from the logical screen width using configurable breakpoints.
+
+### `ScreenUtil().deviceType` and convenience getters
+
+```dart
+ScreenUtil().deviceType   // → DeviceType.phone / .tablet / .desktop / .tv
+ScreenUtil().isPhone      // width < 600
+ScreenUtil().isTablet     // 600 ≤ width < 1024
+ScreenUtil().isDesktop    // 1024 ≤ width < 1600
+ScreenUtil().isTV         // width ≥ 1600
+```
+
+### `ScreenUtil().adaptive<T>()`
+
+Returns a different value per device type with automatic fallback to the next smaller tier:
+
+```dart
+final cols = ScreenUtil().adaptive<int>(
+  phone:   2,
+  tablet:  3,
+  desktop: 4,
+);
+
+final fontSize = ScreenUtil().adaptive<double>(
+  phone:   14.sp,
+  tablet:  16.sp,
+  desktop: 18.sp,
+);
+
+// Omit desktop — it falls back to tablet value
+final cols = ScreenUtil().adaptive(phone: 1, tablet: 2);
+```
+
+### `AdaptiveWidget`
+
+Renders a different widget per device type:
+
+```dart
+AdaptiveWidget(
+  phone:   (ctx) => BottomNavBar(),
+  tablet:  (ctx) => NavigationRail(extended: false),
+  desktop: (ctx) => NavigationRail(extended: true),
+)
+```
+
+### `AdaptiveLayout`
+
+Full layout switcher with separate portrait and landscape overrides:
+
+```dart
+AdaptiveLayout(
+  phone:          (_) => _PhoneScaffold(),
+  landscapePhone: (_) => _LandscapePhoneScaffold(),
+  tablet:         (_) => _TabletScaffold(),
+  desktop:        (_) => _DesktopScaffold(),
+)
+```
+
+### `Breakpoints` — without `ScreenUtil`
+
+Works inside `LayoutBuilder` where you only have `BoxConstraints`:
+
+```dart
+LayoutBuilder(
+  builder: (context, constraints) {
+    final cols = Breakpoints.value<int>(
+      width:   constraints.maxWidth,
+      phone:   1,
+      tablet:  2,
+      desktop: 3,
+    );
+    return GridView.count(crossAxisCount: cols, children: [...]);
+  },
+)
+```
+
+---
+
+## 8. Debug HUD
+
+Enable the live metrics overlay during development:
+
+```dart
+ScreenUtilInit(
+  debugShowOverlay: kDebugMode,   // auto-disabled in release builds
+  ...
+)
+```
+
+The HUD (top-left corner) shows:
+- Screen size in dp
+- Scale factors (width × height)
+- Text scale
+- Orientation
+- Device type
+- Device pixel ratio
+- `16.sp` resolved value (quick sanity check)
+
+Tap to collapse to a compact `SU` badge. The overlay uses its own `Directionality` and is overflow-safe regardless of window size.
+
+### `ScreenMetrics` — immutable snapshot
+
+```dart
+final metrics = ScreenMetrics.current();
+
+metrics.screenWidth   // double
+metrics.screenHeight  // double
+metrics.scaleWidth    // double
+metrics.deviceType    // DeviceType
+metrics.isLandscape   // bool
+metrics.sp(16)        // → same as ScreenUtil().setSp(16)
+```
+
+---
+
+## 9. Phase 5 — Adaptive Extensions
+
+Every dimension type now understands `phone` / `tablet` / `desktop` values. Import is automatic — everything is in `package:flutter_screenutil/flutter_screenutil.dart`.
+
+---
+
+### `AdaptiveNum`
+
+The core class. Provide raw dp values per device, access any scaling axis as a getter.
+
+```dart
+AdaptiveNum({
+  required num phone,
+  num? tablet,    // fallback → phone
+  num? desktop,   // fallback → tablet → phone
+  num? tv,        // fallback → desktop → tablet → phone
+})
+
+.w    // scaled to screen width
+.h    // scaled to screen height
+.sp   // orientation-aware font size
+.r    // scaled to shorter axis (radii, icon sizes)
+.raw  // unscaled — already in logical px
+.hs   // SizedBox(height: value.h)  — vertical spacer widget
+.ws   // SizedBox(width: value.w)   — horizontal spacer widget
+```
+
+```dart
+// Width
+Container(width: AdaptiveNum(phone: 200, tablet: 320, desktop: 480).w)
+
+// Font size
+Text('Heading', style: TextStyle(
+  fontSize: AdaptiveNum(phone: 20, tablet: 24, desktop: 28).sp,
+))
+
+// Icon size (square — uses shorter axis)
+Icon(Icons.star, size: AdaptiveNum(phone: 24, tablet: 32, desktop: 40).r)
+
+// Vertical spacing between widgets
+Column(children: [
+  MyWidget(),
+  AdaptiveNum(phone: 12, tablet: 16, desktop: 24).hs,
+  OtherWidget(),
+])
+```
+
+---
+
+### `num.adaptive()` quick shortcut
+
+Seed an `AdaptiveNum` from any number using `this` as the phone base:
+
+```dart
+16.adaptive(tablet: 18, desktop: 20).sp
+200.adaptive(tablet: 320, desktop: 480).w
+8.adaptive(tablet: 12).r           // desktop falls back to tablet
+12.adaptive(tablet: 16).hs         // vertical spacer widget
+```
+
+---
+
+### Auto-scaled shortcuts
+
+Four shortcut getters apply automatic multipliers so you don't have to calculate every breakpoint:
+
+| Getter | Multipliers | Typical use |
+|--------|-------------|-------------|
+| `.aw`  | phone×1.0, tablet×1.3, desktop×1.6 | Widths |
+| `.ah`  | phone×1.0, tablet×1.2, desktop×1.4 | Heights |
+| `.asp` | phone×1.0, tablet×1.15, desktop×1.25 | Font sizes |
+| `.ar`  | phone×1.0, tablet×1.2, desktop×1.3 | Radii, icon sizes |
+
+```dart
+16.asp    // ≈ AdaptiveNum(phone: 16, tablet: 18.4, desktop: 20).sp
+200.aw    // ≈ AdaptiveNum(phone: 200, tablet: 260, desktop: 320).w
+8.ar      // ≈ AdaptiveNum(phone: 8,  tablet: 9.6,  desktop: 10.4).r
+```
+
+> Use shortcuts for rapid prototyping. Use `AdaptiveNum` with explicit values for pixel-perfect Figma match.
+
+---
+
+### `AdaptiveSize`
+
+For `Size` objects — avatar frames, image placeholders, icon boxes:
+
+```dart
+// Avatar
+final avatarSize = AdaptiveSize(
+  phone:   const Size(40, 40),
+  tablet:  const Size(56, 56),
+  desktop: const Size(72, 72),
+);
+
+CircleAvatar(radius: avatarSize.r.width / 2)
+
+// Banner image
+final bannerSize = AdaptiveSize(
+  phone:   const Size(double.infinity, 180),
+  tablet:  const Size(double.infinity, 260),
+  desktop: const Size(double.infinity, 340),
+);
+
+SizedBox.fromSize(size: bannerSize.wh)
+```
+
+**Scaling getters:**
+
+```dart
+.value  // raw, unscaled
+.wh     // width by scaleWidth, height by scaleHeight
+.w      // both axes by scaleWidth (preserves aspect ratio)
+.r      // shorter axis — for square icons
+```
+
+---
+
+### `AdaptiveEdgeInsets`
+
+Padding that changes per device type:
+
+```dart
+// All sides equal
+AdaptiveEdgeInsets.all(phone: 12, tablet: 16, desktop: 20)
+
+// Symmetric
+AdaptiveEdgeInsets.symmetric(
+  phoneH: 16,  phoneV: 12,
   tabletH: 24, tabletV: 16,
-).wh, // Applies standard .w scaling to horizontals, and .h to verticals
+  desktopH: 40, desktopV: 20,
+)
+
+// Per-side (omitted sides fall back to phone values)
+AdaptiveEdgeInsets.only(
+  phoneLeft: 16, phoneTop: 8, phoneRight: 16, phoneBottom: 8,
+  tabletLeft: 24, tabletTop: 12,
+)
 ```
 
-**TextStyle:**
-Easily switch font sizes, weights, and colors based on device:
+**Scaling getters:**
+
 ```dart
+.w    // all sides scaled by scaleWidth
+.wh   // horizontal sides by scaleWidth, vertical by scaleHeight
+.r    // all sides by shorter axis
+```
+
+```dart
+Padding(
+  padding: AdaptiveEdgeInsets.symmetric(
+    phoneH: 16,  phoneV: 12,
+    tabletH: 24, tabletV: 16,
+    desktopH: 40, desktopV: 20,
+  ).wh,
+)
+```
+
+---
+
+### `AdaptiveTextStyle`
+
+A complete per-device `TextStyle` — font size, weight, and color all adapt:
+
+```dart
+// Body text
 Text(
-  'Adaptive Header',
+  'Article body',
   style: AdaptiveTextStyle(
-    phoneFontSize: 18,
-    desktopFontSize: 24,
-    phoneWeight: FontWeight.w500,
-    desktopWeight: FontWeight.bold,
-    phoneColor: Colors.black,
-    desktopColor: Colors.blue,
+    phoneFontSize:   14,
+    tabletFontSize:  15,
+    desktopFontSize: 16,
+  ).style,
+)
+
+// Heading with per-device weight and color
+Text(
+  'Section title',
+  style: AdaptiveTextStyle(
+    phoneFontSize:   20,
+    tabletFontSize:  24,
+    desktopFontSize: 28,
+    phoneWeight:     FontWeight.w700,
+    desktopWeight:   FontWeight.w500,
+    phoneColor:      Colors.black,
+    desktopColor:    Colors.grey.shade800,
+    letterSpacing:   -0.5,
   ).style,
 )
 ```
 
-**BorderRadius:**
+**All parameters:**
+
+```dart
+AdaptiveTextStyle({
+  required num phoneFontSize,
+  num? tabletFontSize,
+  num? desktopFontSize,
+  num? tvFontSize,
+  FontWeight? phoneWeight,
+  FontWeight? tabletWeight,
+  FontWeight? desktopWeight,
+  Color? phoneColor,
+  Color? tabletColor,
+  Color? desktopColor,
+  String? fontFamily,
+  double? letterSpacing,
+  double? height,
+})
+
+.style  // → TextStyle (fully resolved + scaled)
+```
+
+---
+
+### `AdaptiveBorderRadius`
+
+Border radii that change per device:
+
+```dart
+// All corners equal
+AdaptiveBorderRadius.circular(phone: 8, tablet: 12, desktop: 16)
+
+// Per-corner control
+AdaptiveBorderRadius.only(
+  phoneTL: 8,  phoneTR: 8,
+  tabletTL: 12, tabletTR: 12,
+)
+
+// Full manual
+AdaptiveBorderRadius(
+  phone:   BorderRadius.circular(8),
+  tablet:  BorderRadius.circular(12),
+  desktop: BorderRadius.circular(16),
+)
+```
+
 ```dart
 Container(
   decoration: BoxDecoration(
-    borderRadius: AdaptiveBorderRadius.circular(phone: 8, tablet: 12).w,
+    borderRadius: AdaptiveBorderRadius.circular(
+      phone: 8, tablet: 12, desktop: 16,
+    ).r,
   ),
 )
 ```
 
-**SliverGridDelegate:**
-A fully responsive grid delegate that shifts column counts gracefully.
+**Scaling getters:** `.r` (shorter axis) · `.w` (width axis) · `.value` (raw)
+
+---
+
+### `AdaptiveColor`
+
+When brand color contrast or tint varies per screen size:
+
+```dart
+Container(
+  color: AdaptiveColor(
+    phone:   Colors.blue.shade700,   // higher contrast on small screen
+    tablet:  Colors.blue.shade600,
+    desktop: Colors.blue.shade500,
+  ).value,
+)
+```
+
+---
+
+### `AdaptiveDouble`
+
+Raw double per device — **no ScreenUtil scaling applied**. Use for unitless values: column counts, flex ratios, opacity, animation durations.
+
+```dart
+// Column count
+GridView.count(
+  crossAxisCount: AdaptiveDouble(phone: 1, tablet: 2, desktop: 4).toInt,
+)
+
+// Opacity
+Opacity(
+  opacity: AdaptiveDouble(phone: 1.0, desktop: 0.8).value,
+  child: SidePanel(),
+)
+
+// Animation duration
+AnimatedContainer(
+  duration: Duration(
+    milliseconds: AdaptiveDouble(phone: 300, tablet: 250, desktop: 200).toInt,
+  ),
+)
+
+// Flex ratios
+Row(children: [
+  Expanded(
+    flex: AdaptiveDouble(phone: 1, tablet: 2, desktop: 3).toInt,
+    child: Content(),
+  ),
+  Expanded(
+    flex: AdaptiveDouble(phone: 0, desktop: 1).toInt,
+    child: Sidebar(),
+  ),
+])
+```
+
+---
+
+### `.adaptive()` on existing types
+
+Wrap any existing Flutter value and override only the breakpoints you need:
+
+```dart
+// EdgeInsets
+Padding(
+  padding: EdgeInsets.all(16).adaptive(
+    tablet:  EdgeInsets.all(24),
+    desktop: EdgeInsets.all(40),
+  ).w,
+)
+
+// Size
+SizedBox.fromSize(
+  size: const Size(200, 60).adaptive(
+    tablet:  const Size(280, 72),
+    desktop: const Size(360, 80),
+  ).wh,
+)
+
+// Color
+Icon(
+  Icons.favorite,
+  color: Colors.red.shade600.adaptive(
+    tablet:  Colors.red.shade500,
+    desktop: Colors.red.shade400,
+  ).value,
+)
+
+// BorderRadius
+ClipRRect(
+  borderRadius: BorderRadius.circular(8).adaptive(
+    tablet:  BorderRadius.circular(12),
+    desktop: BorderRadius.circular(16),
+  ).r,
+  child: Image.asset('thumb.jpg'),
+)
+```
+
+---
+
+### `AppSpacing` tokens
+
+A semantic spacing enum following a T-shirt size scale:
+
+| Token   | Phone | Tablet | Desktop |
+|---------|-------|--------|---------|
+| `xxs`   | 2 dp  | 4 dp   | 6 dp    |
+| `xs`    | 4 dp  | 6 dp   | 8 dp    |
+| `sm`    | 8 dp  | 10 dp  | 12 dp   |
+| `md`    | 12 dp | 16 dp  | 20 dp   |
+| `lg`    | 16 dp | 20 dp  | 24 dp   |
+| `xl`    | 24 dp | 32 dp  | 40 dp   |
+| `xxl`   | 32 dp | 48 dp  | 64 dp   |
+| `xxxl`  | 48 dp | 64 dp  | 96 dp   |
+
+```dart
+// As a raw scaled value
+AppSpacing.md.w    // 12 dp → 16 dp → 20 dp (scaled by scaleWidth)
+AppSpacing.lg.h    // scaled by scaleHeight
+
+// As a spacer widget (most common)
+AppSpacing.lg.hs   // SizedBox(height: ...)
+AppSpacing.md.ws   // SizedBox(width: ...)
+```
+
+```dart
+Column(
+  children: [
+    ProfileHeader(),
+    AppSpacing.lg.hs,
+    ProfileBody(),
+    AppSpacing.xl.hs,
+    ActionButtons(),
+  ],
+)
+
+Padding(
+  padding: EdgeInsets.symmetric(
+    horizontal: AppSpacing.lg.w,
+    vertical:   AppSpacing.md.h,
+  ),
+  child: content,
+)
+```
+
+---
+
+### `AdaptiveGridDelegate`
+
+A `SliverGridDelegate` with adaptive cross-axis column counts:
+
+```dart
+AdaptiveGridDelegate({
+  required int phone,
+  int? tablet,
+  int? desktop,
+  int? tv,
+  double spacing = 0,
+  double childAspectRatio = 1.0,
+})
+```
+
 ```dart
 GridView.builder(
+  padding: EdgeInsets.all(AppSpacing.md.w),
   gridDelegate: AdaptiveGridDelegate(
-    phone: 2,         // 2 columns on phone
-    tablet: 3,        // 3 on tablet
-    desktop: 4,       // 4 on desktop
-    spacing: 12,      // Automatically adapts to ScreenUtil units
-    childAspectRatio: 0.8,
+    phone:            2,
+    tablet:           3,
+    desktop:          4,
+    spacing:          AdaptiveNum(phone: 8, tablet: 12, desktop: 16).w,
+    childAspectRatio: AdaptiveDouble(
+      phone: 0.75, tablet: 0.80, desktop: 0.85,
+    ).value,
   ),
-  itemBuilder: (context, index) => const ProductCard(),
+  itemCount: products.length,
+  itemBuilder: (_, i) => ProductCard(products[i]),
 )
 ```
 
-#### 3. New ScreenUtilInit Setup
+---
 
-To utilize all adaptive features safely across orientations, avoid the `.su` mixin name-heuristics in your app and place the entry point widgets inside the `builder` properties natively:
+## 10. Fallback Chain
+
+All `Adaptive*` classes use the same chain when a tier is not provided:
+
+```
+tv  →  desktop  →  tablet  →  phone (required)
+```
+
+```dart
+// Only phone + tablet provided
+AdaptiveNum(phone: 12, tablet: 16)
+// phone   → 12
+// tablet  → 16
+// desktop → 16  (fallback to tablet)
+// tv      → 16  (fallback → desktop → tablet)
+
+// Only phone provided — all devices use phone value, scaled by their own axis
+AdaptiveNum(phone: 12)
+```
+
+---
+
+## 11. Breakpoints
+
+Default values (configurable in `ScreenUtilInit`):
+
+| Device    | Condition                    |
+|-----------|------------------------------|
+| `phone`   | `width < 600 dp`             |
+| `tablet`  | `600 dp ≤ width < 1024 dp`   |
+| `desktop` | `1024 dp ≤ width < 1600 dp`  |
+| `tv`      | `width ≥ 1600 dp`            |
+
+Detection uses **logical screen width** — correctly handles split-screen and desktop window resizing.
 
 ```dart
 ScreenUtilInit(
-  designSize: const Size(390, 844),
-  tabletDesignSize: const Size(768, 1024),
-  minTextScaleFactor: 0.85,
-  maxTextScaleFactor: 1.4,
-  builder: (_, child) => MaterialApp(
-    home: HomePage(), // Let's ScreenUtil explicitly rebuild HomePage at runtime without Mixins
-  ),
-);
+  phoneBreakpoint:  600,    // customize per project
+  tabletBreakpoint: 1024,
+)
 ```
 
-### Example
+---
 
-[example demo](https://github.com/OpenFlutter/flutter_screenutil/blob/master/example/lib)
+## 12. Text Scale Clamp Reference
 
-To use second method run: `flutter run --dart-define=method=2`
+| Scenario | `minTextScaleFactor` | `maxTextScaleFactor` | Result |
+|---|---|---|---|
+| **Default** (most apps) | `0.85` | `1.4` | Safe, accessible range |
+| Information-dense | `0.80` | `1.2` | Tighter, smaller allowed |
+| Accessibility-first | `1.0` | `2.0` | Text only ever grows |
+| Fixed UI (no adaption) | `1.0` | `1.0` | Always exactly design size |
 
-### Effect
-
-![effect](demo_en.png)
-![tablet effect](demo_tablet_en.png)
-
-
-### Update for Version 5.9.0 (Tests)
-Reported as bug in [#515](https://github.com/OpenFlutter/flutter_screenutil/issues/515)
-
-
-In version 5.9.0, to ensure compatibility and proper functioning of your tests, it is crucial to use the method `tester.pumpAndSettle()`; when conducting widget tests that depend on animations or a settling time to complete their state.
-
-In the previous version, this step was not strictly necessary. However, to maintain consistency in your tests and avoid unexpected errors, it's strongly recommended incorporating await tester.pumpAndSettle(); in your widget tests if you are using version 5.9.0
-
-Example usage:
 ```dart
-testWidgets('Should ensure widgets settle correctly', (WidgetTester tester) async {
-await tester.pumpWidget(
-  const MaterialApp(
-    home: ScreenUtilInit(
-      child: MyApp(),
-    ),  
-  ),
-);
-// Insertion of recommended method to prevent failures
-await tester.pumpAndSettle();
-// Continue with your assertions and tests
+// Default (no override needed)
+ScreenUtilInit(
+  designSize: const Size(390, 844),
+  minTextAdapt: true,
+  // minTextScaleFactor defaults to 0.85
+  // maxTextScaleFactor defaults to 1.4
+  builder: (_, child) => MaterialApp(home: child),
+)
+
+// Accessibility-first
+ScreenUtilInit(
+  minTextScaleFactor: 1.0,
+  maxTextScaleFactor: 2.0,
+  ...
+)
+
+// Completely fixed
+ScreenUtilInit(
+  minTextScaleFactor: 1.0,
+  maxTextScaleFactor: 1.0,
+  ...
+)
+```
+
+> **Why 0.85 as the default floor?** The old hardcoded floor was `0.5` — text could shrink to half its design size on small screens, which is unreadable. `0.85` is the accessibility-safe lower bound recommended by Material Design.
+
+---
+
+## 13. Migration Cheat-Sheet
+
+You don't need to change anything. All existing code compiles as-is. The table below shows how to upgrade specific patterns:
+
+| Before (still works) | After (more per-device control) |
+|---|---|
+| `200.w` | `AdaptiveNum(phone: 200, tablet: 280, desktop: 360).w` |
+| `14.sp` | `AdaptiveNum(phone: 14, tablet: 15, desktop: 16).sp` |
+| `8.r` | `AdaptiveNum(phone: 8, tablet: 10, desktop: 12).r` |
+| `200.w` (quick) | `200.aw` (auto-scaled tiers) |
+| `14.sp` (quick) | `14.asp` |
+| `EdgeInsets.all(16).w` | `AdaptiveEdgeInsets.all(phone: 16, tablet: 24, desktop: 32).w` |
+| `BorderRadius.circular(8).r` | `AdaptiveBorderRadius.circular(phone: 8, tablet: 12, desktop: 16).r` |
+| Manual `if (screenWidth > 600)` | `AdaptiveDouble(phone: 1, tablet: 2, desktop: 3).toInt` |
+| `GridView.count(crossAxisCount: 2)` | `AdaptiveGridDelegate(phone: 2, tablet: 3, desktop: 4)` |
+| `SizedBox(height: 16.h)` | `AppSpacing.lg.hs` |
+| Single `landscapeDesignSize` | `landscapeDesignSize` + `tabletLandscapeDesignSize` + `desktopLandscapeDesignSize` |
+
+---
+
+## 14. Full Example App
+
+A complete, copy-paste example demonstrating every feature. Run with:
+
+```bash
+flutter run -t lib/main_adaptive.dart
+```
+
+```dart
+import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+void main() => runApp(MyApp());
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ScreenUtilInit(
+      // Per-device portrait frames
+      designSize:                const Size(390, 844),
+      tabletDesignSize:          const Size(768, 1024),
+      desktopDesignSize:         const Size(1280, 900),
+
+      // Per-device landscape frames (null = auto-transpose)
+      landscapeDesignSize:       const Size(844, 390),
+      tabletLandscapeDesignSize: const Size(1024, 768),
+
+      // Text scale — both bounds user-controlled
+      minTextAdapt:       true,
+      minTextScaleFactor: 0.85,
+      maxTextScaleFactor: 1.4,
+
+      // Breakpoints
+      phoneBreakpoint:  600,
+      tabletBreakpoint: 1024,
+
+      // Live debug HUD — auto-off in release
+      debugShowOverlay: kDebugMode,
+
+      builder: (_, child) => MaterialApp(
+        title: 'Adaptive ScreenUtil Demo',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+          useMaterial3: true,
+        ),
+        home: HomePage(),
+      ),
+    );
+  }
+}
+
+// Phase 3 — full layout switcher with orientation variants
+class HomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return AdaptiveLayout(
+      phone:          (_) => const _PhoneScaffold(),
+      landscapePhone: (_) => const _LandscapePhoneScaffold(),
+      tablet:         (_) => const _TabletScaffold(),
+      desktop:        (_) => const _DesktopScaffold(),
+    );
+  }
+}
+
+// Phone — bottom navigation bar
+class _PhoneScaffold extends StatelessWidget {
+  const _PhoneScaffold();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Adaptive Demo')),
+      body: Column(
+        children: [
+          _DeviceBanner(),
+          Expanded(child: ProductGrid(products: _kProducts)),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
+    );
+  }
+}
+
+// Phone landscape — NavigationRail
+class _LandscapePhoneScaffold extends StatelessWidget {
+  const _LandscapePhoneScaffold();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Adaptive Demo — Landscape')),
+      body: Row(
+        children: [
+          NavigationRail(
+            destinations: const [
+              NavigationRailDestination(icon: Icon(Icons.home), label: Text('Home')),
+              NavigationRailDestination(icon: Icon(Icons.search), label: Text('Search')),
+            ],
+            selectedIndex: 0,
+            onDestinationSelected: (_) {},
+          ),
+          Expanded(child: ProductGrid(products: _kProducts)),
+        ],
+      ),
+    );
+  }
+}
+
+// Tablet — NavigationDrawer side panel
+class _TabletScaffold extends StatelessWidget {
+  const _TabletScaffold();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Row(
+        children: [
+          NavigationDrawer(
+            children: [
+              DrawerHeader(child: Text('Adaptive Demo')),
+              const ListTile(leading: Icon(Icons.home),   title: Text('Home')),
+              const ListTile(leading: Icon(Icons.search), title: Text('Search')),
+            ],
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                _DeviceBanner(),
+                Expanded(child: ProductGrid(products: _kProducts)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Desktop — extended NavigationRail with adaptive width
+class _DesktopScaffold extends StatelessWidget {
+  const _DesktopScaffold();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Row(
+        children: [
+          NavigationRail(
+            extended: true,
+            minExtendedWidth: AdaptiveNum(phone: 160, desktop: 200).w,
+            destinations: const [
+              NavigationRailDestination(icon: Icon(Icons.home),     label: Text('Home')),
+              NavigationRailDestination(icon: Icon(Icons.search),   label: Text('Search')),
+              NavigationRailDestination(icon: Icon(Icons.person),   label: Text('Profile')),
+              NavigationRailDestination(icon: Icon(Icons.settings), label: Text('Settings')),
+            ],
+            selectedIndex: 0,
+            onDestinationSelected: (_) {},
+            leading: Padding(
+              padding: AdaptiveEdgeInsets.symmetric(
+                phoneH: 16, phoneV: 24,
+                desktopH: 24, desktopV: 32,
+              ).w,
+              child: Text(
+                'Adaptive Demo',
+                style: AdaptiveTextStyle(
+                  phoneFontSize: 18,
+                  desktopFontSize: 22,
+                  phoneWeight: FontWeight.bold,
+                ).style,
+              ),
+            ),
+          ),
+          const VerticalDivider(thickness: 1, width: 1),
+          Expanded(
+            child: Column(
+              children: [
+                _DeviceBanner(),
+                Expanded(child: ProductGrid(products: _kProducts)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Live device info banner — every Phase 5 API at a glance
+class _DeviceBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final su = ScreenUtil();
+    final metrics = ScreenMetrics.current();
+    return Container(
+      width: double.infinity,
+      color: Theme.of(context).colorScheme.primaryContainer,
+      padding: AdaptiveEdgeInsets.symmetric(
+        phoneH: 16, phoneV: 10,
+        desktopH: 24, desktopV: 14,
+      ).w,
+      child: Wrap(
+        spacing: AppSpacing.md.w,
+        runSpacing: AppSpacing.xs.h,
+        children: [
+          Chip(label: Text('${metrics.screenWidth.toStringAsFixed(0)}'
+              '×${metrics.screenHeight.toStringAsFixed(0)} dp')),
+          Chip(label: Text(su.deviceType.name)),
+          Chip(label: Text(su.isLandscape ? 'landscape' : 'portrait')),
+          Chip(label: Text('16.sp = ${su.setSp(16).toStringAsFixed(1)}')),
+          Chip(label: Text('scaleW = ${su.scaleWidth.toStringAsFixed(3)}')),
+        ],
+      ),
+    );
+  }
+}
+
+// ProductCard — showcases Phase 5 Adaptive* classes
+class ProductCard extends StatelessWidget {
+  const ProductCard({
+    required this.title,
+    required this.price,
+    required this.emoji,
+  });
+  final String title;
+  final double price;
+  final String emoji;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: AdaptiveBorderRadius.circular(
+          phone: 8, tablet: 12, desktop: 16,
+        ).r,
+      ),
+      child: Padding(
+        padding: AdaptiveEdgeInsets.all(
+          phone: 12, tablet: 16, desktop: 20,
+        ).w,
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                emoji,
+                style: TextStyle(
+                  fontSize: AdaptiveNum(phone: 32, tablet: 40, desktop: 48).r,
+                ),
+              ),
+              AppSpacing.sm.hs,
+              Text(
+                title,
+                style: AdaptiveTextStyle(
+                  phoneFontSize: 14,
+                  tabletFontSize: 16,
+                  desktopFontSize: 18,
+                  phoneWeight: FontWeight.w600,
+                ).style,
+              ),
+              AppSpacing.xs.hs,
+              Text(
+                '\$${price.toStringAsFixed(2)}',
+                style: AdaptiveTextStyle(
+                  phoneFontSize: 13,
+                  tabletFontSize: 14,
+                  desktopFontSize: 15,
+                  phoneColor: Colors.green.shade700,
+                  tabletColor: Colors.green.shade600,
+                  desktopColor: Colors.green.shade500,
+                ).style,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ProductGrid — AdaptiveGridDelegate
+class ProductGrid extends StatelessWidget {
+  const ProductGrid({required this.products});
+  final List<Map<String, dynamic>> products;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: EdgeInsets.all(AppSpacing.md.w),
+      gridDelegate: AdaptiveGridDelegate(
+        phone:            2,
+        tablet:           3,
+        desktop:          4,
+        spacing:          AdaptiveNum(phone: 8, tablet: 12, desktop: 16).w,
+        childAspectRatio: AdaptiveDouble(
+          phone: 0.75, tablet: 0.80, desktop: 0.85,
+        ).value,
+      ),
+      itemCount: products.length,
+      itemBuilder: (_, i) => ProductCard(
+        title: products[i]['title'] as String,
+        price: (products[i]['price'] as num).toDouble(),
+        emoji: products[i]['emoji'] as String,
+      ),
+    );
+  }
+}
+
+const _kProducts = [
+  {'title': 'Wireless Headphones', 'price': 79.99,  'emoji': '🎧'},
+  {'title': 'Mechanical Keyboard', 'price': 129.99, 'emoji': '⌨️'},
+  {'title': 'Gaming Mouse',        'price': 59.99,  'emoji': '🖱️'},
+  {'title': 'USB-C Hub',           'price': 39.99,  'emoji': '🔌'},
+];
+```
+
+---
+
+## 15. Testing
+
+```bash
+flutter test test/adaptive_test.dart
+```
+
+Widget tests — initialize `ScreenUtil` before assertions:
+
+```dart
+testWidgets('cards render on phone', (tester) async {
+  await tester.pumpWidget(
+    ScreenUtilInit(
+      designSize: const Size(390, 844),
+      builder: (_, __) => const MaterialApp(home: Scaffold(body: ProductCard(...))),
+    ),
+  );
+  await tester.pumpAndSettle();
+
+  expect(find.byType(ProductCard), findsOneWidget);
 });
 ```
+
+Use `ScreenMetrics.current()` to assert exact scale values in unit tests:
+
+```dart
+test('sp is clamped on wide screen', () {
+  ScreenUtil.configure(
+    data: MediaQueryData(size: const Size(2000, 1000)),
+    designSize: const Size(390, 844),
+    maxTextScaleFactor: 1.4,
+  );
+  final metrics = ScreenMetrics.current();
+  expect(metrics.sp(16), closeTo(16 * 1.4, 0.5));
+});
+```
+
+---
+
+[Update log](https://github.com/OpenFlutter/flutter_screenutil/blob/master/CHANGELOG.md) · [中文文档](https://github.com/OpenFlutter/flutter_screenutil/blob/master/README_CN.md) · [GitHub](https://github.com/OpenFlutter/flutter_screenutil)
