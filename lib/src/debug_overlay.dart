@@ -171,12 +171,15 @@ class _ScreenUtilDebugOverlayState extends State<ScreenUtilDebugOverlay> {
       alignment: Alignment.topLeft,
       children: [
         widget.child,
-        SafeArea(
-          child: GestureDetector(
-            onTap: () => setState(() => _collapsed = !_collapsed),
-            child: _collapsed
-                ? _CollapsedHud(key: const ValueKey('su_hud_collapsed'))
-                : _ExpandedHud(key: const ValueKey('su_hud_expanded')),
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: SafeArea(
+            child: GestureDetector(
+              onTap: () => setState(() => _collapsed = !_collapsed),
+              child: _collapsed
+                  ? _CollapsedHud(key: const ValueKey('su_hud_collapsed'))
+                  : _ExpandedHud(key: const ValueKey('su_hud_expanded')),
+            ),
           ),
         ),
       ],
@@ -248,9 +251,12 @@ class _ExpandedHud extends StatelessWidget {
           decoration: TextDecoration.none,
           height: 1.6,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'ScreenUtil',
@@ -281,6 +287,7 @@ class _ExpandedHud extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

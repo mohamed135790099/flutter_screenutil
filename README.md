@@ -47,20 +47,30 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 ### Properties
 
-| Property          | Type             | Default Value | Description                                                                                                                                   |
-| ----------------- | ---------------- | ------------- |-----------------------------------------------------------------------------------------------------------------------------------------------|
-| designSize        | Size             | Size(360,690) | The size of the device screen in the design draft, in dp                                                                                      |
-| builder           | Function         | null          | Return widget that uses the library in a property (ex: MaterialApp's theme)                                                                   |
-| child             | Widget           | null          | A part of builder that its dependencies/properties don't use the library                                                                      |
-| rebuildFactor     | Function         | _default_     | Function that take old and new screen metrics and returns whether to rebuild or not when changes.                                             |
-| splitScreenMode   | bool             | false         | support for split screen                                                                                                                      |
-| minTextAdapt      | bool             | false         | Whether to adapt the text according to the minimum of width and height                                                                        |
-| context           | BuildContext     | null          | Get physical device data if not provided, by MediaQuery.of(context)                                                                           |
-| fontSizeResolver  | Function         | _default_     | Function that specify how font size should be adapted. Default is that font size scale with width of screen.                                  |
-| responsiveWidgets | Iterable<String> | null          | List/Set of widget names that should be included in rebuilding tree. (See [How flutter_screenutil marks a widget needs build](#rebuild-list)) |
-| excludeWidgets    | Iterable<String> | null          | List/Set of widget names that should be excluded from rebuilding tree.                                                                        |
-| enableScaleWH    | Function | null          | Support enable scale width and height.                                                                                                        |
-| enableScaleText    | Function | null          | Support enable scale text.                                                                                                                    |
+| Property                   | Type             | Default Value | Description                                                                                                                                   |
+| -------------------------- | ---------------- | ------------- |-----------------------------------------------------------------------------------------------------------------------------------------------|
+| designSize                 | Size             | Size(360,690) | The size of the device screen in the design draft (portrait phone), in dp                                                                     |
+| tabletDesignSize           | Size             | null          | The portrait size of the tablet design draft                                                                                                  |
+| desktopDesignSize          | Size             | null          | The portrait size of the desktop design draft                                                                                                 |
+| landscapeDesignSize        | Size             | null          | The landscape size of the phone design draft (if omitted, auto-transposes `designSize`)                                                       |
+| tabletLandscapeDesignSize  | Size             | null          | The landscape size of the tablet design draft (if omitted, auto-transposes `tabletDesignSize`)                                                |
+| desktopLandscapeDesignSize | Size             | null          | The landscape size of the desktop design draft (if omitted, auto-transposes `desktopDesignSize`)                                              |
+| minTextScaleFactor         | double           | 0.85          | The absolute minimum scaling factor for text elements (floor)                                                                                 |
+| maxTextScaleFactor         | double           | 1.4           | The absolute maximum scaling factor for text elements (ceiling)                                                                               |
+| phoneBreakpoint            | double           | 600           | The logical width at which `DeviceType` switches from phone to tablet                                                                         |
+| tabletBreakpoint           | double           | 1024          | The logical width at which `DeviceType` switches from tablet to desktop                                                                       |
+| builder                    | Function         | null          | Return widget that uses the library in a property (ex: MaterialApp's theme)                                                                   |
+| child                      | Widget           | null          | A part of builder that its dependencies/properties don't use the library                                                                      |
+| rebuildFactor              | Function         | _default_     | Function that take old and new screen metrics and returns whether to rebuild or not when changes.                                             |
+| splitScreenMode            | bool             | false         | support for split screen                                                                                                                      |
+| minTextAdapt               | bool             | false         | Whether to adapt the text according to the minimum of width and height                                                                        |
+| context                    | BuildContext     | null          | Get physical device data if not provided, by MediaQuery.of(context)                                                                           |
+| fontSizeResolver           | Function         | _default_     | Function that specify how font size should be adapted. Default is that font size scale with width of screen.                                  |
+| responsiveWidgets          | Iterable<String> | null          | List/Set of widget names that should be included in rebuilding tree. (See [How flutter_screenutil marks a widget needs build](#rebuild-list)) |
+| excludeWidgets             | Iterable<String> | null          | List/Set of widget names that should be excluded from rebuilding tree.                                                                        |
+| enableScaleWH              | Function         | null          | Support enable scale width and height.                                                                                                        |
+| enableScaleText            | Function         | null          | Support enable scale text.                                                                                                                    |
+| debugShowOverlay           | bool             | false         | Shows a live HUD overlay of screen metrics like scaling factors, breakpoints, and orientations                                                |
 
 
 **Note : You must either provide builder, child or both.**
@@ -380,6 +390,105 @@ MediaQuery(
 ```
 
 [widget test](https://github.com/OpenFlutter/flutter_screenutil/issues/115)
+
+### Adaptive UI Extensions (v6.0+)
+
+Version 6 introduces a powerful suite of **Adaptive Extensions** that automatically select values depending on the current device type (`phone`, `tablet`, `desktop`, `tv`).
+
+#### 1. Adaptive primitives & `.adaptive()`
+You can declare adaptive numbers or generic types with fallbacks. If a larger tier isn't provided, it automatically falls back to the next smaller one tier available.
+
+```dart
+// Returns 16.sp on phones, 18.sp on tablets, and 20.sp on desktop+
+final fontSize = ScreenUtil().adaptive<double>(
+  phone: 16.sp,
+  tablet: 18.sp,
+  desktop: 20.sp,
+);
+
+// Built-in numbers using AdaptiveNum
+double width = AdaptiveNum(phone: 100, tablet: 150, desktop: 200).w;
+double height = AdaptiveNum(phone: 50, tablet: 80).h;
+```
+
+**Quick primitive syntax:**
+Instead of `.w` or `.h`, you can chain adaptive extensions directly on the `AdaptiveNum`:
+```dart
+AdaptiveNum(phone: 24, tablet: 32).sp  // returns an adaptive scaled font size
+AdaptiveNum(phone: 10, tablet: 16).w   // returns an adaptive scaled width
+```
+
+#### 2. Adaptive Widget APIs
+
+A collection of pre-made tools has been added to make UI components fluid out of the box:
+
+**EdgeInsets:**
+```dart
+// All sides equal per device
+padding: AdaptiveEdgeInsets.all(phone: 12, tablet: 16, desktop: 20).w,
+
+// Symmetric per-device
+padding: AdaptiveEdgeInsets.symmetric(
+  phoneH: 16, phoneV: 12,
+  tabletH: 24, tabletV: 16,
+).wh, // Applies standard .w scaling to horizontals, and .h to verticals
+```
+
+**TextStyle:**
+Easily switch font sizes, weights, and colors based on device:
+```dart
+Text(
+  'Adaptive Header',
+  style: AdaptiveTextStyle(
+    phoneFontSize: 18,
+    desktopFontSize: 24,
+    phoneWeight: FontWeight.w500,
+    desktopWeight: FontWeight.bold,
+    phoneColor: Colors.black,
+    desktopColor: Colors.blue,
+  ).style,
+)
+```
+
+**BorderRadius:**
+```dart
+Container(
+  decoration: BoxDecoration(
+    borderRadius: AdaptiveBorderRadius.circular(phone: 8, tablet: 12).w,
+  ),
+)
+```
+
+**SliverGridDelegate:**
+A fully responsive grid delegate that shifts column counts gracefully.
+```dart
+GridView.builder(
+  gridDelegate: AdaptiveGridDelegate(
+    phone: 2,         // 2 columns on phone
+    tablet: 3,        // 3 on tablet
+    desktop: 4,       // 4 on desktop
+    spacing: 12,      // Automatically adapts to ScreenUtil units
+    childAspectRatio: 0.8,
+  ),
+  itemBuilder: (context, index) => const ProductCard(),
+)
+```
+
+#### 3. New ScreenUtilInit Setup
+
+To utilize all adaptive features safely across orientations, avoid the `.su` mixin name-heuristics in your app and place the entry point widgets inside the `builder` properties natively:
+
+```dart
+ScreenUtilInit(
+  designSize: const Size(390, 844),
+  tabletDesignSize: const Size(768, 1024),
+  minTextScaleFactor: 0.85,
+  maxTextScaleFactor: 1.4,
+  builder: (_, child) => MaterialApp(
+    home: HomePage(), // Let's ScreenUtil explicitly rebuild HomePage at runtime without Mixins
+  ),
+);
+```
 
 ### Example
 
