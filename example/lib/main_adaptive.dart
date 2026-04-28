@@ -7,6 +7,9 @@ library flutter_screenutil.example_adaptive;
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'typography_stress_test_page.dart';
+import 'advanced_demo_page.dart';
+import 'ultimate_demo_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Entry point
@@ -25,7 +28,8 @@ class MyApp extends StatelessWidget {
       // ── Per-device portrait frames ──────────────────────────────────────
       designSize: const Size(390, 844), // phone portrait (required)
       tabletDesignSize: const Size(768, 1024), // tablet portrait
-      desktopDesignSize: const Size(1280, 900), // desktop portrait
+      desktopDesignSize: const Size(1024, 768), // desktop portrait (narrow window)
+      desktopLandscapeDesignSize: const Size(1280, 900), // desktop landscape (standard)
 
       // ── Per-device landscape frames (null = auto-transpose) ─────────────
       landscapeDesignSize: const Size(844, 390), // phone landscape
@@ -33,8 +37,8 @@ class MyApp extends StatelessWidget {
       // desktopLandscapeDesignSize omitted → auto-transposed from desktop
 
       // ── Text ────────────────────────────────────────────────────────────
-      minTextAdapt: true,
-      minTextScaleFactor: 0.85, // floor (was hardcoded 0.5)
+      minTextAdapt: false,
+      minTextScaleFactor: 0.85,
       maxTextScaleFactor: 1.4, // ceiling, now user-overridable
 
       // ── Breakpoints (defaults shown) ────────────────────────────────────
@@ -61,15 +65,84 @@ class MyApp extends StatelessWidget {
 // HomePage — Phase 3 AdaptiveLayout selects the correct scaffold
 // ─────────────────────────────────────────────────────────────────────────────
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
+
+  void _onDestinationSelected(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  Widget _buildBody() {
+    switch (_selectedIndex) {
+      case 0:
+        return Column(
+          children: [
+            _DeviceBanner(),
+            const Expanded(child: ProductGrid(products: _kProducts)),
+          ],
+        );
+      case 1:
+        return Column(
+          children: [
+            _DeviceBanner(),
+            const Expanded(child: TypographyStressTestPage()),
+          ],
+        );
+      case 2:
+        return Column(
+          children: [
+            _DeviceBanner(),
+            const Expanded(child: AdvancedDemoPage()),
+          ],
+        );
+      case 3:
+        return Column(
+          children: [
+            _DeviceBanner(),
+            const Expanded(child: UltimateFeaturesPage()),
+          ],
+        );
+      default:
+        return Column(
+          children: [
+            _DeviceBanner(),
+            const Expanded(child: Center(child: Text('Coming soon...'))),
+          ],
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Phase 3 — full layout switcher with portrait + landscape variants.
     return AdaptiveLayout(
-      phone: (_) => const _PhoneScaffold(),
-      landscapePhone: (_) => const _LandscapePhoneScaffold(),
-      tablet: (_) => const _TabletScaffold(),
-      desktop: (_) => const _DesktopScaffold(),
+      phone: (_) => _PhoneScaffold(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onDestinationSelected,
+        body: _buildBody(),
+      ),
+      landscapePhone: (_) => _LandscapePhoneScaffold(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onDestinationSelected,
+        body: _buildBody(),
+      ),
+      tablet: (_) => _TabletScaffold(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onDestinationSelected,
+        body: _buildBody(),
+      ),
+      desktop: (_) => _DesktopScaffold(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onDestinationSelected,
+        body: _buildBody(),
+      ),
     );
   }
 }
@@ -79,24 +152,44 @@ class HomePage extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PhoneScaffold extends StatelessWidget {
-  const _PhoneScaffold();
+  const _PhoneScaffold({
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.body,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final Widget body;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Adaptive Demo — Phone')),
-      body: Column(
-        children: [
-          _DeviceBanner(),
-          Expanded(child: ProductGrid(products: _kProducts)),
-        ],
-      ),
+      body: body,
       bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        currentIndex: selectedIndex,
+        onTap: onDestinationSelected,
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home, size: 24.r), 
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.text_format, size: 24.r), 
+            label: 'Typography',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_customize, size: 24.r), 
+            label: 'Advanced',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.layers, size: 24.r), 
+            label: 'Ultimate',
+          ),
         ],
+        selectedLabelStyle: TextStyle(fontSize: 12.sp),
+        unselectedLabelStyle: TextStyle(fontSize: 12.sp),
       ),
     );
   }
@@ -107,7 +200,15 @@ class _PhoneScaffold extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _LandscapePhoneScaffold extends StatelessWidget {
-  const _LandscapePhoneScaffold();
+  const _LandscapePhoneScaffold({
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.body,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final Widget body;
 
   @override
   Widget build(BuildContext context) {
@@ -116,16 +217,24 @@ class _LandscapePhoneScaffold extends StatelessWidget {
       body: Row(
         children: [
           NavigationRail(
-            destinations: const [
+            destinations: [
               NavigationRailDestination(
-                  icon: Icon(Icons.home), label: Text('Home')),
+                  icon: Icon(Icons.home, size: 24.r), 
+                  label: Text('Home', style: TextStyle(fontSize: 13.sp))),
               NavigationRailDestination(
-                  icon: Icon(Icons.search), label: Text('Search')),
+                  icon: Icon(Icons.text_format, size: 24.r), 
+                  label: Text('Typography', style: TextStyle(fontSize: 13.sp))),
+              NavigationRailDestination(
+                  icon: Icon(Icons.dashboard_customize, size: 24.r), 
+                  label: Text('Advanced', style: TextStyle(fontSize: 13.sp))),
+              NavigationRailDestination(
+                  icon: Icon(Icons.layers, size: 24.r), 
+                  label: Text('Ultimate', style: TextStyle(fontSize: 13.sp))),
             ],
-            selectedIndex: 0,
-            onDestinationSelected: (_) {},
+            selectedIndex: selectedIndex,
+            onDestinationSelected: onDestinationSelected,
           ),
-          Expanded(child: ProductGrid(products: _kProducts)),
+          Expanded(child: body),
         ],
       ),
     );
@@ -137,7 +246,15 @@ class _LandscapePhoneScaffold extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _TabletScaffold extends StatelessWidget {
-  const _TabletScaffold();
+  const _TabletScaffold({
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.body,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final Widget body;
 
   @override
   Widget build(BuildContext context) {
@@ -145,21 +262,27 @@ class _TabletScaffold extends StatelessWidget {
       body: Row(
         children: [
           NavigationDrawer(
+            selectedIndex: selectedIndex,
+            onDestinationSelected: onDestinationSelected,
             children: [
-              DrawerHeader(child: Text('Adaptive Demo — Tablet')),
-              const ListTile(leading: Icon(Icons.home), title: Text('Home')),
-              const ListTile(
-                  leading: Icon(Icons.search), title: Text('Search')),
+              DrawerHeader(
+                child: Text('Adaptive Demo — Tablet', 
+                style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold))),
+              NavigationDrawerDestination(
+                  icon: Icon(Icons.home, size: 24.r), 
+                  label: Text('Home', style: TextStyle(fontSize: 14.sp))),
+              NavigationDrawerDestination(
+                  icon: Icon(Icons.text_format, size: 24.r), 
+                  label: Text('Typography', style: TextStyle(fontSize: 14.sp))),
+              NavigationDrawerDestination(
+                  icon: Icon(Icons.dashboard_customize, size: 24.r), 
+                  label: Text('Advanced', style: TextStyle(fontSize: 14.sp))),
+              NavigationDrawerDestination(
+                  icon: Icon(Icons.layers, size: 24.r), 
+                  label: Text('Ultimate', style: TextStyle(fontSize: 14.sp))),
             ],
           ),
-          Expanded(
-            child: Column(
-              children: [
-                _DeviceBanner(),
-                Expanded(child: ProductGrid(products: _kProducts)),
-              ],
-            ),
-          ),
+          Expanded(child: body),
         ],
       ),
     );
@@ -171,7 +294,15 @@ class _TabletScaffold extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _DesktopScaffold extends StatelessWidget {
-  const _DesktopScaffold();
+  const _DesktopScaffold({
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.body,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final Widget body;
 
   @override
   Widget build(BuildContext context) {
@@ -181,18 +312,22 @@ class _DesktopScaffold extends StatelessWidget {
           NavigationRail(
             extended: true,
             minExtendedWidth: AdaptiveNum(phone: 160, desktop: 200).w,
-            destinations: const [
+            destinations: [
               NavigationRailDestination(
-                  icon: Icon(Icons.home), label: Text('Home')),
+                  icon: Icon(Icons.home, size: 28.r), 
+                  label: Text('Home', style: TextStyle(fontSize: 15.sp))),
               NavigationRailDestination(
-                  icon: Icon(Icons.search), label: Text('Search')),
+                  icon: Icon(Icons.text_format, size: 28.r), 
+                  label: Text('Typography', style: TextStyle(fontSize: 15.sp))),
               NavigationRailDestination(
-                  icon: Icon(Icons.person), label: Text('Profile')),
+                  icon: Icon(Icons.dashboard_customize, size: 28.r), 
+                  label: Text('Advanced', style: TextStyle(fontSize: 15.sp))),
               NavigationRailDestination(
-                  icon: Icon(Icons.settings), label: Text('Settings')),
+                  icon: Icon(Icons.layers, size: 28.r), 
+                  label: Text('Ultimate', style: TextStyle(fontSize: 15.sp))),
             ],
-            selectedIndex: 0,
-            onDestinationSelected: (_) {},
+            selectedIndex: selectedIndex,
+            onDestinationSelected: onDestinationSelected,
             leading: Padding(
               padding: AdaptiveEdgeInsets.symmetric(
                 phoneH: 16, phoneV: 24,
@@ -209,19 +344,17 @@ class _DesktopScaffold extends StatelessWidget {
             ),
           ),
           const VerticalDivider(thickness: 1, width: 1),
-          Expanded(
-            child: Column(
-              children: [
-                _DeviceBanner(),
-                Expanded(child: ProductGrid(products: _kProducts)),
-              ],
-            ),
-          ),
+          Expanded(child: body),
         ],
       ),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Typography Stress Test
+// ─────────────────────────────────────────────────────────────────────────────
+// The TypographyStressTestPage is defined in typography_stress_test_page.dart
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared widgets
