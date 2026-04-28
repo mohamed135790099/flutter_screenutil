@@ -254,9 +254,10 @@ class ScreenUtil {
     double tabletBreakpoint = 1024,
     FontSizeResolver? fontSizeResolver,
   }) {
+    final mq = MediaQuery.maybeOf(context);
     final view = View.maybeOf(context);
     configure(
-      data: view != null ? MediaQueryData.fromView(view) : null,
+      data: mq ?? (view != null ? MediaQueryData.fromView(view) : null),
       designSize: designSize,
       tabletDesignSize: tabletDesignSize,
       desktopDesignSize: desktopDesignSize,

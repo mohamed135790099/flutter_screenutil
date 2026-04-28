@@ -33,29 +33,34 @@ class HomePageScaffold extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Container(
-                  padding: EdgeInsets.all(ScreenUtil().setWidth(10)),
-                  width: 180.w,
-                  height: 200.h,
-                  color: Colors.red,
-                  child: Text(
-                    '我的实际宽度:${180.w}dp \n'
-                    '我的实际高度:${200.h}dp',
-                    style: TextStyle(color: Colors.white, fontSize: 12.sp),
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(ScreenUtil().setWidth(10)),
+                    width: 180.w,
+                    height: 200.h,
+                    color: Colors.red,
+                    child: Text(
+                      '我的实际宽度:${180.w}dp \n'
+                      '我的实际高度:${200.h}dp',
+                      style: TextStyle(color: Colors.white, fontSize: 12.sp),
+                    ),
                   ),
                 ),
-                Container(
-                  padding: EdgeInsets.all(ScreenUtil().setWidth(10)),
-                  width: ScreenUtil().setWidth(180),
-                  height: ScreenUtil().setHeight(200),
-                  color: Colors.blue,
-                  child: Text(
-                      '我的设计稿宽度: 180dp \n'
-                      '我的设计稿高度: 200dp',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: ScreenUtil().setSp(12))),
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(ScreenUtil().setWidth(10)),
+                    width: ScreenUtil().setWidth(180),
+                    height: ScreenUtil().setHeight(200),
+                    color: Colors.blue,
+                    child: Text(
+                        '我的设计稿宽度: 180dp \n'
+                        '我的设计稿高度: 200dp',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: ScreenUtil().setSp(12))),
+                  ),
                 ),
               ],
             ),

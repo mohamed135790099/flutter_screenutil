@@ -4,7 +4,8 @@
 ///   flutter run -t lib/main_adaptive.dart
 library flutter_screenutil.example_adaptive;
 
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:device_preview/device_preview.dart';
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'typography_stress_test_page.dart';
@@ -15,13 +16,17 @@ import 'ultimate_demo_page.dart';
 // Entry point
 // ─────────────────────────────────────────────────────────────────────────────
 
-void main() => runApp(MyApp());
+void main() => runApp(DevicePreview(
+      enabled: kDebugMode && kIsWeb,
+      builder: (BuildContext context) =>  MyApp(),
+    ));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Root
 // ─────────────────────────────────────────────────────────────────────────────
 
 class MyApp extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
@@ -47,15 +52,19 @@ class MyApp extends StatelessWidget {
 
       // ── Debug HUD (live metrics overlay) ────────────────────────────────
       debugShowOverlay: kDebugMode,
+      useInheritedMediaQuery: true,
 
-      builder: (_, child) => MaterialApp(
+      builder: (context, child) => MaterialApp(
         title: 'Adaptive ScreenUtil Demo',
         debugShowCheckedModeBanner: false,
+        useInheritedMediaQuery: true,
+        locale: DevicePreview.locale(context),
+        builder: DevicePreview.appBuilder,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
           useMaterial3: true,
         ),
-        home: HomePage(),
+        home:  HomePage(),
       ),
     );
   }
@@ -66,6 +75,7 @@ class MyApp extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class HomePage extends StatefulWidget {
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -170,26 +180,27 @@ class _PhoneScaffold extends StatelessWidget {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedIndex,
         onTap: onDestinationSelected,
+        type: BottomNavigationBarType.fixed,
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home, size: 24.r), 
+            icon: Icon(Icons.home, size: 24.r),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.text_format, size: 24.r), 
+            icon: Icon(Icons.text_format, size: 24.r),
             label: 'Typography',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_customize, size: 24.r), 
+            icon: Icon(Icons.dashboard_customize, size: 24.r),
             label: 'Advanced',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.layers, size: 24.r), 
+            icon: Icon(Icons.layers, size: 24.r),
             label: 'Ultimate',
           ),
         ],
-        selectedLabelStyle: TextStyle(fontSize: 12.sp),
-        unselectedLabelStyle: TextStyle(fontSize: 12.sp),
+        selectedLabelStyle: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold),
+        unselectedLabelStyle: TextStyle(fontSize: 11.sp),
       ),
     );
   }

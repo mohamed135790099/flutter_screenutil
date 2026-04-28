@@ -251,6 +251,9 @@ class _ScreenUtilInitState extends State<ScreenUtilInit>
   }
 
   MediaQueryData? _newData() {
+    final mq = MediaQuery.maybeOf(context);
+    if (mq != null) return mq;
+
     final view = View.maybeOf(context);
     if (view != null) return MediaQueryData.fromView(view);
     return null;
